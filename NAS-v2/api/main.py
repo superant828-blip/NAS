@@ -33,7 +33,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, Header, UploadFile,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
-from pydantic import BaseModel, validator, constr
+from pydantic import BaseModel, field_validator, constr, model_validator
 import jwt
 
 from core.config import config
@@ -289,7 +289,7 @@ class LoginRequest(BaseModel):
     email: str
     password: str
     
-    @validator('email')
+    @field_validator('email')
     def validate_email(cls, v):
         result = InputValidator.validate_email(v)
         if not result.valid:
@@ -309,21 +309,21 @@ class UserCreate(BaseModel):
     password: str
     role: str = "user"
     
-    @validator('email')
+    @field_validator('email')
     def validate_email(cls, v):
         result = InputValidator.validate_email(v)
         if not result.valid:
             raise ValueError(result.message)
         return v
     
-    @validator('password')
+    @field_validator('password')
     def validate_password(cls, v):
         result = InputValidator.validate_password_strength(v)
         if not result.valid:
             raise ValueError(result.message)
         return v
     
-    @validator('role')
+    @field_validator('role')
     def validate_role(cls, v):
         allowed = ['user', 'admin', 'guest']
         if v not in allowed:
@@ -335,7 +335,7 @@ class PasswordChange(BaseModel):
     old_password: str
     new_password: str
     
-    @validator('new_password')
+    @field_validator('new_password')
     def validate_new_password(cls, v):
         result = InputValidator.validate_password_strength(v)
         if not result.valid:
@@ -347,7 +347,7 @@ class FolderCreate(BaseModel):
     name: str
     parent_id: Optional[int] = None
     
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, v):
         result = InputValidator.validate_filename(v)
         if not result.valid:
@@ -358,7 +358,7 @@ class FolderCreate(BaseModel):
 class FileRename(BaseModel):
     name: str
     
-    @validator('name')
+    @field_validator('name')
     def validate_name(cls, v):
         result = InputValidator.validate_filename(v)
         if not result.valid:
@@ -378,13 +378,13 @@ class ShareCreate(BaseModel):
     password: Optional[str] = None
     expire_hours: int = 24
     
-    @validator('file_type')
+    @field_validator('file_type')
     def validate_file_type(cls, v):
         if v not in ['file', 'photo', 'folder']:
             raise ValueError("file_type must be 'file', 'photo', or 'folder'")
         return v
     
-    @validator('expire_hours')
+    @field_validator('expire_hours')
     def validate_expire_hours(cls, v):
         if v < 1 or v > 8760:  # 1小时到1年
             raise ValueError("expire_hours must be between 1 and 8760")
@@ -397,7 +397,7 @@ class ShareLinkCreate(BaseModel):
     expires_days: int = 1
     password: Optional[str] = None
     
-    @validator('file_ids')
+    @field_validator('file_ids')
     def validate_file_ids(cls, v):
         if not v:
             raise ValueError("file_ids cannot be empty")
