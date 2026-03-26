@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # NAS 应用
+  nas:
+    build: .
+    container_name: nas-v2
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - ./cache:/app/cache
+      - ./uploads:/app/uploads
+    environment:
+      - NAS_HOST=0.0.0.0
+      - NAS_PORT=8000
+      - NAS_DEBUG=false
+      - DB_TYPE=${DB_TYPE:-sqlite}
+      - DB_PATH=${DB_PATH:-data/nas.db}
+      - NAS_SECRET_KEY=${NAS_SECRET_KEY}
+      # MySQL 配置 (当 DB_TYPE=mysql 时使用)
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_USER=${MYSQL_USER:-nas}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-nas123}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nas_db}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - nas-network
+
+  # MySQL 数据库 (可选)
+  mysql:
+    image: mysql:8.0
+    container_name: nas-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root123}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nas_db}
+      - MYSQL_USER=${MYSQL_USER:-nas}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-nas123}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - nas-network
+    # 仅在需要 MySQL 时启用，注释掉使用 SQLite
+    profiles:
+      - mysql
+
+networks:
+  nas-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

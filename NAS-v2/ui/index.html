@@ -1,0 +1,2978 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAS 存储管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0091ea;
+            --primary-dark: #0069c0;
+            --success: #00c853;
+            --warning: #ffab00;
+            --danger: #ff1744;
+            --bg-dark: #0d1117;
+            --bg-sidebar: #161b22;
+            --bg-card: #21262d;
+            --bg-hover: #30363d;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        #app { height: 100vh; }
+        
+        /* 登录页 */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+        }
+        .login-box {
+            width: 400px;
+            padding: 40px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo i {
+            font-size: 48px;
+            color: var(--primary);
+        }
+        .login-logo h2 {
+            margin-top: 12px;
+            font-weight: 600;
+        }
+        .login-logo p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .form-control {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+        }
+        .form-control:focus {
+            background: var(--bg-dark);
+            border-color: var(--primary);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(0,145,234,0.2);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        
+        /* 主布局 */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-header i {
+            font-size: 28px;
+            color: var(--primary);
+        }
+        .sidebar-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .sidebar-header small {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+        
+        .nav-menu { flex: 1; padding: 12px; overflow-y: auto; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .nav-item.active {
+            background: rgba(0,145,234,0.15);
+            color: var(--primary);
+        }
+        .nav-item i { font-size: 18px; width: 24px; text-align: center; }
+        
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .user-name { font-size: 14px; font-weight: 500; }
+        .user-role { font-size: 12px; color: var(--text-muted); }
+        
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 顶部栏 */
+        .topbar {
+            height: 60px;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            flex-shrink: 0;
+        }
+        
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        /* 面包屑导航 */
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+        .breadcrumb-nav a {
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .breadcrumb-nav a:hover {
+            color: var(--primary);
+        }
+        
+        /* 内容区 */
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: var(--bg-dark);
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .page-title i { color: var(--primary); }
+        
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .toolbar-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toolbar-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+        }
+        .toolbar-btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        .toolbar-btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        /* 搜索框 */
+        .search-box {
+            position: relative;
+            margin-left: auto;
+        }
+        .search-box input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 16px 8px 36px;
+            color: var(--text-primary);
+            width: 250px;
+            font-size: 14px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        
+        /* 文件网格 */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .file-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .file-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--text-muted);
+            transform: translateY(-2px);
+        }
+        .file-card.selected {
+            border-color: var(--primary);
+            background: rgba(0,145,234,0.1);
+        }
+        .file-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+        .file-icon.folder { color: #ffc107; }
+        .file-icon.image { color: #4facfe; }
+        .file-icon.video { color: #f093fb; }
+        .file-icon.pdf { color: #ff6b6b; }
+        .file-icon.doc { color: #4facfe; }
+        .file-icon.archive { color: #00c853; }
+        .file-name {
+            font-size: 14px;
+            text-align: center;
+            word-break: break-all;
+            color: var(--text-primary);
+        }
+        .file-size {
+            font-size: 12px;
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .file-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+            display: none;
+        }
+        .file-card.selected .file-checkbox { display: block; }
+        
+        /* 批量工具栏 */
+        .batch-toolbar {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        .batch-toolbar.active { display: flex; }
+        
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .info-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+        .info-card:hover {
+            border-color: var(--text-muted);
+            transform: translateY(-2px);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title i { color: var(--primary); }
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* 照片网格 */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            padding: 16px;
+        }
+        .photo-card {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            font-size: 40px;
+        }
+        .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            padding: 30px 8px 8px;
+            display: none;
+        }
+        .photo-card:hover .photo-overlay {
+            display: block;
+        }
+        .photo-name {
+            color: white;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+        
+        /* 池状态 */
+        .pool-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .pool-header {
+            padding: 16px 20px;
+            background: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pool-name {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pool-name i { color: var(--primary); }
+        .pool-body {
+            padding: 20px;
+        }
+        .pool-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .stat-value.healthy { color: var(--success); }
+        .stat-value.warning { color: var(--warning); }
+        .stat-value.danger { color: var(--danger); }
+        
+        /* 进度条 */
+        .progress {
+            height: 8px;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+        .progress-bar {
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+        
+        /* 表格 */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table {
+            margin: 0;
+            color: var(--text-primary);
+        }
+        .table > thead {
+            background: var(--bg-sidebar);
+        }
+        .table > thead th {
+            border: none;
+            padding: 14px 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .table > tbody > tr {
+            border-color: var(--border);
+            transition: background 0.2s;
+        }
+        .table > tbody > tr:hover {
+            background: var(--bg-hover);
+        }
+        .table td {
+            padding: 14px 16px;
+            border-color: var(--border);
+            vertical-align: middle;
+        }
+        
+        /* 共享卡片 */
+        .share-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .share-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .share-icon.smb { color: #4facfe; }
+        .share-icon.nfs { color: #00c853; }
+        .share-icon.link { color: var(--primary); }
+        .share-info { flex: 1; }
+        .share-name { font-weight: 600; margin-bottom: 4px; }
+        .share-path { font-size: 13px; color: var(--text-muted); }
+        .share-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* 分享链接卡片 */
+        .link-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .link-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .link-name { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .link-name i { color: var(--primary); }
+        .link-url {
+            background: var(--bg-dark);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            margin-bottom: 8px;
+        }
+        .link-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .link-expires {
+            color: var(--warning);
+        }
+        
+        /* 快照 */
+        .snapshot-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .snapshot-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .snapshot-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .snapshot-name i { color: var(--warning); }
+        .snapshot-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h5 {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        /* 模态框 */
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .modal-header {
+            border-color: var(--border);
+            padding: 20px 24px;
+        }
+        .modal-title { font-weight: 600; }
+        .modal-body { padding: 24px; }
+        .modal-footer { border-color: var(--border); padding: 16px 24px; }
+        .btn-close {
+            filter: invert(1);
+        }
+        
+        /* 徽章 */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* 警告提示 */
+        .alert-warning {
+            background: rgba(255, 171, 0, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        /* 按钮Loading状态 */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            top: 50%;
+            left: 50%;
+            margin: -7px 0 0 -7px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .toolbar-btn.loading {
+            pointer-events: none;
+        }
+        .toolbar-btn.loading i {
+            display: none;
+        }
+        .toolbar-btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            top: 50%;
+            left: 50%;
+            margin: -7px 0 0 -7px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* 增强的加载动画 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 17, 23, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 10px;
+        }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Toast 提示 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 280px;
+        }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--primary); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* 增强的空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h5 {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .empty-state .empty-action {
+            margin-top: 20px;
+        }
+        .empty-state .empty-action button {
+            margin: 0 8px;
+        }
+
+        /* 照片预览模态框 */
+        .photo-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .photo-preview-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            position: relative;
+        }
+        .photo-preview-content img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 8px;
+        }
+        .photo-preview-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .photo-preview-info {
+            color: white;
+            text-align: center;
+            margin-top: 16px;
+        }
+        .photo-preview-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        /* 批量移动 */
+        .folder-tree {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .folder-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .folder-item:hover {
+            background: var(--bg-hover);
+        }
+        .folder-item.selected {
+            background: rgba(0,145,234,0.2);
+            border: 1px solid var(--primary);
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 1200px) {
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 200px;
+            }
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            .pool-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -240px;
+                top: 0;
+                bottom: 0;
+                z-index: 1000;
+                transition: left 0.3s;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+                display: none;
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            .file-card {
+                padding: 10px;
+            }
+            .file-icon {
+                font-size: 36px;
+            }
+            .file-name {
+                font-size: 12px;
+            }
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 8px;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box {
+                margin-left: 0;
+                margin-top: 12px;
+            }
+            .search-box input {
+                width: 100%;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .batch-toolbar {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .batch-toolbar .ms-auto {
+                margin-left: 0 !important;
+                width: 100%;
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            .content-area {
+                padding: 16px;
+            }
+            .topbar {
+                padding: 0 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-box {
+                width: 90%;
+                padding: 24px;
+            }
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+            .file-icon {
+                font-size: 28px;
+            }
+            .photo-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .modal-dialog {
+                margin: 16px;
+            }
+            .pool-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Toast 提示 -->
+        <div class="toast-container">
+            <div v-for="toast in toasts" :key="toast.id" class="toast" :class="toast.type">
+                <i :class="{
+                    'bi bi-check-circle-fill': toast.type === 'success',
+                    'bi bi-x-circle-fill': toast.type === 'error',
+                    'bi bi-info-circle-fill': toast.type === 'info'
+                }"></i>
+                <span>{{ toast.message }}</span>
+            </div>
+        </div>
+        
+        <!-- 登录页 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <div class="login-logo">
+                    <i class="bi bi-hdd-stack-fill"></i>
+                    <h2>NAS 存储管理</h2>
+                    <p>安全 · 可靠 · 高效</p>
+                </div>
+                <form @submit.prevent="handleLogin">
+                    <div class="mb-3">
+                        <label class="form-label">邮箱</label>
+                        <input type="email" class="form-control" v-model="loginForm.email" placeholder="请输入邮箱" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-control" v-model="loginForm.password" placeholder="请输入密码" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">登录</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 主应用 -->
+        <div v-else class="app-layout">
+            <!-- 移动端遮罩层 -->
+            <div class="sidebar-overlay" :class="{ show: sidebarShow }" @click="sidebarShow = false"></div>
+            
+            <!-- 侧边栏 -->
+            <div class="sidebar" :class="{ show: sidebarShow }">
+                <div class="sidebar-header">
+                    <i class="bi bi-hdd-stack-fill"></i>
+                    <div>
+                        <h4>NAS 存储</h4>
+                        <small>私有云系统</small>
+                    </div>
+                </div>
+                <div class="nav-menu">
+                    <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>仪表盘</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="currentPage = 'files'">
+                        <i class="bi bi-folder-fill"></i>
+                        <span>文件管理</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'shares' }" @click="currentPage = 'shares'">
+                        <i class="bi bi-folder-share-fill"></i>
+                        <span>共享服务</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'albums' }" @click="currentPage = 'albums'">
+                        <i class="bi bi-images"></i>
+                        <span>相册</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'links' }" @click="currentPage = 'links'">
+                        <i class="bi bi-link-45deg"></i>
+                        <span>分享链接</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'snapshots' }" @click="currentPage = 'snapshots'">
+                        <i class="bi bi-camera-fill"></i>
+                        <span>快照管理</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'trash' }" @click="currentPage = 'trash'">
+                        <i class="bi bi-trash-fill"></i>
+                        <span>回收站</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'users' }" v-if="currentUser.role === 'admin'" @click="currentPage = 'users'">
+                        <i class="bi bi-people-fill"></i>
+                        <span>用户管理</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'profile' }" @click="currentPage = 'profile'">
+                        <i class="bi bi-person-fill"></i>
+                        <span>个人资料</span>
+                    </div>
+                </div>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <div class="user-avatar">{{ currentUser.username.charAt(0).toUpperCase() }}</div>
+                        <div>
+                            <div class="user-name">{{ currentUser.username }}</div>
+                            <div class="user-role">{{ currentUser.role === 'admin' ? '管理员' : '用户' }}</div>
+                        </div>
+                        <i class="bi bi-box-arrow-right ms-auto" style="cursor:pointer;color:var(--text-muted)" @click="logout" title="退出"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 主内容 -->
+            <div class="main-content">
+                <!-- 顶部栏 -->
+                <div class="topbar">
+                    <button class="btn-icon mobile-menu-btn" @click="sidebarShow = !sidebarShow">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="breadcrumb-nav">
+                        <a @click="currentPage='dashboard'"><i class="bi bi-house-fill"></i></a>
+                        <span v-if="currentPage === 'files' && currentFolderId"> / {{ currentFolderName }}</span>
+                    </div>
+                    <div class="topbar-actions">
+                        <button class="btn-icon" @click="loadData" title="刷新">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 内容区 -->
+                <div class="content-area">
+                    <!-- 仪表盘 -->
+                    <div v-show="currentPage === 'dashboard'" class="page active">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-speedometer2"></i>仪表盘</h4>
+                        </div>
+                        
+                        <div class="card-grid mb-4">
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-database"></i>存储池</div>
+                                </div>
+                                <div class="card-value">{{ systemStatus.pools }}</div>
+                                <div class="card-subtitle">ZFS 池数量</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-folder2-open"></i>共享</div>
+                                </div>
+                                <div class="card-value">{{ systemStatus.shares }}</div>
+                                <div class="card-subtitle">活动共享</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-link"></i>分享链接</div>
+                                </div>
+                                <div class="card-value">{{ systemStatus.links }}</div>
+                                <div class="card-subtitle">有效链接</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-camera"></i>快照</div>
+                                </div>
+                                <div class="card-value">{{ systemStatus.snapshots }}</div>
+                                <div class="card-subtitle">系统快照</div>
+                            </div>
+                        </div>
+                        
+                        <div class="page-header">
+                            <h5 class="page-title"><i class="bi bi-hdd"></i>存储池状态</h4>
+                        </div>
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!pools.length" class="empty-state">
+                            <i class="bi bi-database"></i>
+                            <h5>暂无存储池</h5>
+                            <p>请创建 ZFS 池开始使用</p>
+                        </div>
+                        <div v-else>
+                            <div v-for="pool in pools" :key="pool.name" class="pool-card mb-3">
+                                <div class="pool-header">
+                                    <div class="pool-name">
+                                        <i class="bi bi-hdd-fill"></i>
+                                        {{ pool.name }}
+                                    </div>
+                                    <span class="badge" :style="{ background: pool.health === 'ONLINE' ? 'var(--success)' : 'var(--danger)', color: '#fff' }">
+                                        {{ pool.health }}
+                                    </span>
+                                </div>
+                                <div class="pool-body">
+                                    <div class="pool-stats">
+                                        <div class="stat-item">
+                                            <div class="stat-label">总容量</div>
+                                            <div class="stat-value">{{ pool.size }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-label">已用</div>
+                                            <div class="stat-value">{{ pool.allocated }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-label">可用</div>
+                                            <div class="stat-value">{{ pool.free }}</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="stat-label">使用率</div>
+                                            <div class="stat-value" :class="{ danger: pool.usage_percent > 80 }">{{ pool.cap }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" :style="{ width: pool.cap }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文件管理 -->
+                    <div v-show="currentPage === 'files'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-folder-fill"></i>文件管理</h4>
+                        </div>
+                        <div class="toolbar">
+                            <input type="file" ref="uploadInput" style="display:none" multiple @change="handleUpload">
+                            <button class="toolbar-btn toolbar-btn-primary" :class="{ 'btn-loading': btnLoading.upload }" @click="triggerUpload">
+                                <i class="bi bi-cloud-upload"></i> 上传文件
+                            </button>
+                            <button class="toolbar-btn" @click="showFolderModal = true">
+                                <i class="bi bi-folder-plus"></i> 新建文件夹
+                            </button>
+                            <button class="toolbar-btn" v-if="selectedFiles.size === 1" @click="prepareRename">
+                                <i class="bi bi-pencil"></i> 重命名
+                            </button>
+                            <button class="toolbar-btn" v-if="selectedFiles.size > 0" @click="showMoveDialog">
+                                <i class="bi bi-folder-fill"></i> 移动
+                            </button>
+                            <button class="toolbar-btn" v-if="selectedFiles.size > 0" @click="showShareModal = true">
+                                <i class="bi bi-share"></i> 分享选中
+                            </button>
+                            <button class="toolbar-btn" @click="goHome" v-if="currentFolderId">
+                                <i class="bi bi-arrow-return-left"></i> 返回根目录
+                            </button>
+                            <div class="search-box">
+                                <i class="bi bi-search"></i>
+                                <input type="text" v-model="searchQuery" placeholder="搜索文件..." @keyup.enter="searchFiles">
+                            </div>
+                        </div>
+                        <div class="batch-toolbar" :class="{ active: selectedFiles.size > 0 }">
+                            <i class="bi bi-check-circle-fill" style="color:var(--primary)"></i>
+                            <span>已选择 <strong>{{ selectedFiles.size }}</strong> 个文件</span>
+                            <div class="ms-auto">
+                                <button class="toolbar-btn" @click="showShareModal = true"><i class="bi bi-share"></i> 分享</button>
+                                <button class="toolbar-btn" @click="showMoveDialog"><i class="bi bi-folder-fill"></i> 移动</button>
+                                <button class="toolbar-btn" :class="{ 'btn-loading': btnLoading.delete }" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteSelected"><i class="bi bi-trash"></i> 删除</button>
+                                <button class="toolbar-btn" @click="clearSelection">取消</button>
+                            </div>
+                        </div>
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!files.length" class="empty-state">
+                            <i class="bi bi-folder2-open"></i>
+                            <h5>文件夹为空</h5>
+                            <p>上传文件或创建文件夹开始使用</p>
+                            <div class="empty-action">
+                                <button class="toolbar-btn toolbar-btn-primary" @click="triggerUpload">
+                                    <i class="bi bi-cloud-upload"></i> 上传文件
+                                </button>
+                                <button class="toolbar-btn" @click="showFolderModal = true">
+                                    <i class="bi bi-folder-plus"></i> 新建文件夹
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="file-grid">
+                            <div v-for="f in files" :key="f.id" 
+                                 class="file-card" 
+                                 :class="{ selected: selectedFiles.has(f.id) }"
+                                 @click="handleFileClick(f)">
+                                <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
+                                <div class="file-icon" :class="{ folder: f.is_folder }">
+                                    <i :class="getFileIcon(f)"></i>
+                                </div>
+                                <div class="file-name">{{ f.name }}</div>
+                                <div class="file-size">{{ f.is_folder ? '文件夹' : formatSize(f.size) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 共享服务 -->
+                    <div v-show="currentPage === 'shares'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-folder-share-fill"></i>共享服务</h4>
+                        </div>
+                        <div class="toolbar">
+                            <button class="toolbar-btn toolbar-btn-primary" @click="showSmbModal = true">
+                                <i class="bi bi-share"></i> SMB 共享
+                            </button>
+                            <button class="toolbar-btn" @click="showNfsModal = true">
+                                <i class="bi bi-globe"></i> NFS 共享
+                            </button>
+                            <button class="toolbar-btn" @click="loadShares">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div class="page-header">
+                            <h5>SMB/CIFS 共享</h5>
+                        </div>
+                        <div v-if="!shares.smb || !shares.smb.length" class="empty-state" style="padding:30px">
+                            <i class="bi bi-folder-x"></i>
+                            <h5>暂无 SMB 共享</h5>
+                        </div>
+                        <div v-else>
+                            <div v-for="share in shares.smb" :key="share.name" class="share-card">
+                                <div class="share-icon smb"><i class="bi bi-windows"></i></div>
+                                <div class="share-info">
+                                    <div class="share-name">{{ share.name }}</div>
+                                    <div class="share-path">{{ share.path }}</div>
+                                </div>
+                                <div class="share-actions">
+                                    <button class="toolbar-btn" @click="copyShareLink('smb', share.name)">
+                                        <i class="bi bi-clipboard"></i> 复制
+                                    </button>
+                                    <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteShare('smb', share.name)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="page-header mt-4">
+                            <h5>NFS 共享</h5>
+                        </div>
+                        <div v-if="!shares.nfs || !shares.nfs.length" class="empty-state" style="padding:30px">
+                            <i class="bi bi-folder-x"></i>
+                            <h5>暂无 NFS 共享</h5>
+                        </div>
+                        <div v-else>
+                            <div v-for="share in shares.nfs" :key="share.path" class="share-card">
+                                <div class="share-icon nfs"><i class="bi bi-terminal"></i></div>
+                                <div class="share-info">
+                                    <div class="share-name">{{ share.path }}</div>
+                                    <div class="share-path">{{ share.clients }} ({{ share.options }})</div>
+                                </div>
+                                <div class="share-actions">
+                                    <button class="toolbar-btn" @click="copyShareLink('nfs', share.path)">
+                                        <i class="bi bi-clipboard"></i> 复制
+                                    </button>
+                                    <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteShare('nfs', share.path)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 分享链接 -->
+                    <div v-show="currentPage === 'links'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-link-45deg"></i>分享链接</h4>
+                        </div>
+                        <div class="toolbar">
+                            <button class="toolbar-btn toolbar-btn-primary" @click="showCreateLinkModal = true">
+                                <i class="bi bi-plus-circle"></i> 创建分享链接
+                            </button>
+                            <button class="toolbar-btn" @click="loadShareLinks">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div class="alert-warning" v-if="shareLinks.length">
+                            <i class="bi bi-info-circle"></i>
+                            分享链接可用于分享文件给他人，无需登录即可下载
+                        </div>
+                        
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!shareLinks.length" class="empty-state">
+                            <i class="bi bi-link-45deg"></i>
+                            <h5>暂无分享链接</h5>
+                            <p>创建分享链接来分享文件</p>
+                            <div class="empty-action">
+                                <button class="toolbar-btn toolbar-btn-primary" @click="showCreateLinkModal = true">
+                                    <i class="bi bi-plus-circle"></i> 创建分享链接
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <div v-for="link in shareLinks" :key="link.id" class="link-card">
+                                <div class="link-header">
+                                    <div class="link-name">
+                                        <i class="bi bi-file-earmark-fill"></i>
+                                        {{ link.file_name }}
+                                    </div>
+                                    <div class="share-actions">
+                                        <button class="toolbar-btn" :class="{ 'btn-loading': btnLoading['link-' + link.id] }" @click="copyShareUrl(link.token); setBtnLoading('link-' + link.id, true); setTimeout(() => setBtnLoading('link-' + link.id, false), 1000)">
+                                            <i class="bi bi-clipboard"></i> 复制链接
+                                        </button>
+                                        <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteShareLink(link.id)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="link-url">{{ getShareUrl(link.token) }}</div>
+                                <div class="link-meta">
+                                    <span>创建时间: {{ formatDate(link.created_at) }}</span>
+                                    <span v-if="link.expires_at" class="link-expires ms-3">
+                                        <i class="bi bi-clock"></i> 过期: {{ formatDate(link.expires_at) }}
+                                    </span>
+                                    <span v-else class="ms-3" style="color:var(--success)">
+                                        <i class="bi bi-infinity"></i> 永久有效
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 快照管理 -->
+                    <div v-show="currentPage === 'snapshots'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-camera-fill"></i>快照管理</h4>
+                        </div>
+                        <div class="toolbar">
+                            <button class="toolbar-btn toolbar-btn-primary" @click="showSnapshotModal = true">
+                                <i class="bi bi-plus-circle"></i> 创建快照
+                            </button>
+                            <button class="toolbar-btn" @click="loadSnapshots">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div class="alert-warning" v-if="snapshots.length">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            快照可以保护您的数据，建议定期创建
+                        </div>
+                        
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!snapshots.length" class="empty-state">
+                            <i class="bi bi-camera"></i>
+                            <h5>暂无快照</h5>
+                        </div>
+                        <div v-else>
+                            <div v-for="snap in snapshots" :key="snap.name" class="snapshot-card">
+                                <div class="snapshot-header">
+                                    <div class="snapshot-name">
+                                        <i class="bi bi-camera-fill"></i>
+                                        {{ snap.snapshot_name }}
+                                    </div>
+                                    <div class="share-actions">
+                                        <button class="toolbar-btn" @click="rollbackSnapshot(snap.name)">
+                                            <i class="bi bi-arrow-counterclockwise"></i> 回滚
+                                        </button>
+                                        <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteSnapshot(snap.name)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="snapshot-meta">
+                                    数据集: {{ snap.dataset }} | 创建时间: {{ snap.creation }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 回收站 -->
+                    <div v-show="currentPage === 'trash'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-trash-fill"></i>回收站</h4>
+                        </div>
+                        <div class="toolbar">
+                            <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger)" @click="emptyTrash">
+                                <i class="bi bi-trash"></i> 清空回收站
+                            </button>
+                            <button class="toolbar-btn" @click="loadTrash">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!trashItems.length" class="empty-state">
+                            <i class="bi bi-trash"></i>
+                            <h5>回收站为空</h5>
+                            <p>删除的文件会在这里显示</p>
+                            <div class="empty-action">
+                                <button class="toolbar-btn" @click="currentPage = 'files'">
+                                    <i class="bi bi-folder-fill"></i> 返回文件管理
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr><th>名称</th><th>删除时间</th><th>操作</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="item in trashItems" :key="item.id">
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ formatDate(item.deleted_at) }}</td>
+                                        <td>
+                                            <button class="toolbar-btn" style="background:var(--success);border-color:var(--success);color:white" @click="restoreTrash(item.id)">
+                                                <i class="bi bi-arrow-counterclockwise"></i> 恢复
+                                            </button>
+                                            <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="permanentDelete(item.id)">
+                                                <i class="bi bi-x-circle"></i> 彻底删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 相册 -->
+                    <div v-show="currentPage === 'albums'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-images"></i>相册</h4>
+                        </div>
+                        <div class="toolbar">
+                            <input type="file" id="photoUpload" style="display:none" multiple accept="image/*" @change="handlePhotoUpload">
+                            <button class="toolbar-btn toolbar-btn-primary" onclick="document.getElementById('photoUpload').click()">
+                                <i class="bi bi-cloud-upload"></i> 上传照片
+                            </button>
+                            <button class="toolbar-btn" onclick="createAlbum()">
+                                <i class="bi bi-folder-plus"></i> 新建相册
+                            </button>
+                            <button class="toolbar-btn" @click="loadAlbums">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!albums.length" class="empty-state">
+                            <i class="bi bi-images"></i>
+                            <h5>暂无相册</h5>
+                            <p>创建相册并上传照片</p>
+                            <div class="empty-action">
+                                <button class="toolbar-btn toolbar-btn-primary" onclick="createAlbum()">
+                                    <i class="bi bi-folder-plus"></i> 新建相册
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="card-grid">
+                            <div v-for="album in albums" :key="album.id" class="info-card" onclick="viewAlbum(album.id)">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-folder-fill"></i> {{ album.name }}</div>
+                                </div>
+                                <div class="card-value">{{ album.photo_count || 0 }}</div>
+                                <div class="card-subtitle">张照片</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 相册详情 -->
+                    <div v-show="currentPage === 'album-detail'" class="page">
+                        <div class="page-header">
+                            <button class="toolbar-btn" @click="currentPage = 'albums'; currentAlbumId = null">
+                                <i class="bi bi-arrow-left"></i> 返回
+                            </button>
+                            <h4 class="page-title"><i class="bi bi-folder-fill"></i> 相册详情</h4>
+                        </div>
+                        <div class="toolbar">
+                            <input type="file" id="photoUploadDetail" style="display:none" multiple accept="image/*" @change="handlePhotoUpload">
+                            <button class="toolbar-btn toolbar-btn-primary" onclick="document.getElementById('photoUploadDetail').click()">
+                                <i class="bi bi-cloud-upload"></i> 上传照片
+                            </button>
+                        </div>
+                        
+                        <div v-if="!currentAlbumPhotos.length" class="empty-state">
+                            <i class="bi bi-image"></i>
+                            <h5>暂无照片</h5>
+                            <p>上传照片到此相册</p>
+                            <div class="empty-action">
+                                <button class="toolbar-btn toolbar-btn-primary" onclick="document.getElementById('photoUploadDetail').click()">
+                                    <i class="bi bi-cloud-upload"></i> 上传照片
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="photo-grid">
+                            <div v-for="photo in currentAlbumPhotos" :key="photo.id" class="photo-card" @click="openPhotoPreview(photo)">
+                                <img :src="API + '/photos/' + photo.id + '/thumbnail'" :alt="photo.original_name" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                                <div class="photo-placeholder" style="display:none">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                <div class="photo-overlay">
+                                    <span class="photo-name">{{ photo.original_name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 用户管理 -->
+                    <div v-show="currentPage === 'users'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-people-fill"></i>用户管理</h4>
+                        </div>
+                        <div class="toolbar">
+                            <button class="toolbar-btn toolbar-btn-primary" @click="showUserModal = true">
+                                <i class="bi bi-person-plus"></i> 添加用户
+                            </button>
+                            <button class="toolbar-btn" @click="loadUsers">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                        <div v-else class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr><th>ID</th><th>用户名</th><th>邮箱</th><th>角色</th><th>创建时间</th><th>操作</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="u in users" :key="u.id">
+                                        <td>{{ u.id }}</td>
+                                        <td>{{ u.username }}</td>
+                                        <td>{{ u.email }}</td>
+                                        <td><span class="badge" :style="{ background: u.role==='admin' ? 'var(--warning)' : 'var(--primary)', color: u.role==='admin' ? '#000' : '#fff' }">{{ u.role==='admin' ? '管理员' : '用户' }}</span></td>
+                                        <td>{{ u.created_at }}</td>
+                                        <td>
+                                            <button v-if="u.id !== currentUser.id" class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteUser(u.id)">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 个人资料 -->
+                    <div v-show="currentPage === 'profile'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-person-fill"></i>个人资料</h4>
+                        </div>
+                        <div class="table-container" style="max-width:600px">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">用户名</label>
+                                    <input type="text" class="form-control" v-model="profileForm.username">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" v-model="currentUser.email" disabled>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">角色</label>
+                                    <input type="text" class="form-control" :value="currentUser.role === 'admin' ? '管理员' : '用户'" disabled>
+                                </div>
+                                <button class="toolbar-btn toolbar-btn-primary" @click="updateProfile">保存修改</button>
+                            </div>
+                            <div class="modal-body border-top">
+                                <h6 class="mb-3">修改密码</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">当前密码</label>
+                                    <input type="password" class="form-control" v-model="profileForm.oldPassword">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">新密码</label>
+                                    <input type="password" class="form-control" v-model="profileForm.newPassword">
+                                </div>
+                                <button class="toolbar-btn" style="background:var(--warning);border-color:var(--warning);color:#000" @click="changePassword">修改密码</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 创建文件夹模态框 -->
+        <div v-if="showFolderModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">新建文件夹</h5>
+                        <button type="button" class="btn-close" @click="showFolderModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" class="form-control" v-model="newFolderName" placeholder="文件夹名称" @keyup.enter="createFolder">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showFolderModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createFolder">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 重命名模态框 -->
+        <div v-if="showRenameModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">重命名文件</h5>
+                        <button type="button" class="btn-close" @click="showRenameModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" class="form-control" v-model="renameForm.name" placeholder="新名称" @keyup.enter="renameFile">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showRenameModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="renameFile">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 批量移动模态框 -->
+        <div v-if="showMoveModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">移动文件</h5>
+                        <button type="button" class="btn-close" @click="showMoveModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">已选择 {{ selectedFiles.size }} 个文件</p>
+                        <div class="mb-3">
+                            <label class="form-label">目标文件夹</label>
+                            <div class="folder-tree">
+                                <div class="folder-item" :class="{ selected: moveForm.targetFolderId === null }" @click="moveForm.targetFolderId = null">
+                                    <i class="bi bi-folder-fill"></i>
+                                    <span>根目录</span>
+                                </div>
+                                <div v-for="folder in moveForm.folders" :key="folder.id" 
+                                     class="folder-item" 
+                                     :class="{ selected: moveForm.targetFolderId === folder.id }"
+                                     @click="moveForm.targetFolderId = folder.id">
+                                    <i class="bi bi-folder-fill" style="color:#ffc107"></i>
+                                    <span>{{ folder.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showMoveModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" :class="{ 'btn-loading': btnLoading.move }" @click="moveSelected">
+                            <i class="bi bi-folder-fill"></i> 移动
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 照片预览模态框 -->
+        <div v-if="showPhotoPreview && previewPhoto" class="photo-preview-modal">
+            <div class="photo-preview-content">
+                <button class="photo-preview-close" @click="closePhotoPreview">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+                <img :src="API + '/photos/' + previewPhoto.id" :alt="previewPhoto.original_name" @error="$event.target.style.display='none'">
+                <div class="photo-preview-info">
+                    <h5>{{ previewPhoto.original_name }}</h5>
+                    <p class="text-muted">{{ previewPhoto.created_at ? formatDate(previewPhoto.created_at) : '' }}</p>
+                    <div class="photo-preview-actions">
+                        <button class="toolbar-btn" style="background:var(--primary);border-color:var(--primary);color:white" @click="window.open(API + '/photos/' + previewPhoto.id, '_blank')">
+                            <i class="bi bi-download"></i> 下载
+                        </button>
+                        <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deletePhoto(previewPhoto.id)">
+                            <i class="bi bi-trash"></i> 删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分享文件模态框 -->
+        <div v-if="showShareModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">分享文件</h5>
+                        <button type="button" class="btn-close" @click="showShareModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">已选择 {{ selectedFiles.size }} 个文件</p>
+                        <div class="mb-3">
+                            <label class="form-label">有效期</label>
+                            <select class="form-control" v-model="shareForm.expires">
+                                <option value="0">永久有效</option>
+                                <option value="1">1天</option>
+                                <option value="7">7天</option>
+                                <option value="30">30天</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">访问密码 (可选)</label>
+                            <input type="text" class="form-control" v-model="shareForm.password" placeholder="留空则无需密码">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showShareModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createShareLink">创建链接</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 创建分享链接模态框 -->
+        <div v-if="showCreateLinkModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建分享链接</h5>
+                        <button type="button" class="btn-close" @click="showCreateLinkModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">选择文件</label>
+                            <select class="form-control" v-model="createLinkForm.fileId">
+                                <option value="">请选择文件</option>
+                                <option v-for="f in files" :key="f.id" :value="f.id">{{ f.name }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">有效期</label>
+                            <select class="form-control" v-model="createLinkForm.expires">
+                                <option value="0">永久有效</option>
+                                <option value="1">1天</option>
+                                <option value="7">7天</option>
+                                <option value="30">30天</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showCreateLinkModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createShareLinkFromModal">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 创建存储池模态框 -->
+        <div v-if="showCreatePool" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建存储池</h5>
+                        <button type="button" class="btn-close" @click="showCreatePool = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">池名称</label>
+                            <input type="text" class="form-control" v-model="poolForm.name" placeholder="如: tank">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">磁盘设备 (空格分隔)</label>
+                            <input type="text" class="form-control" v-model="poolForm.vdevs" placeholder="如: /dev/sdb /dev/sdc">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">布局</label>
+                            <select class="form-control" v-model="poolForm.layout">
+                                <option value="basic">基本 (Single)</option>
+                                <option value="mirror">镜像 (Mirror)</option>
+                                <option value="raidz1">RAID-Z1</option>
+                            </select>
+                        </div>
+                        <div class="alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            警告: 创建存储池将格式化选中的磁盘!
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showCreatePool = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createPool">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SMB 共享模态框 -->
+        <div v-if="showSmbModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建 SMB 共享</h5>
+                        <button type="button" class="btn-close" @click="showSmbModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">共享名称</label>
+                            <input type="text" class="form-control" v-model="shareForm.name" placeholder="如: shared">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">路径</label>
+                            <input type="text" class="form-control" v-model="shareForm.path" placeholder="如: /mnt/tank/data/shared">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" v-model="shareForm.writable" id="writable">
+                                <label class="form-check-label" for="writable">可写</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" v-model="shareForm.guest_ok" id="guest_ok">
+                                <label class="form-check-label" for="guest_ok">允许访客访问</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showSmbModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createSmbShare">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- NFS 共享模态框 -->
+        <div v-if="showNfsModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建 NFS 共享</h5>
+                        <button type="button" class="btn-close" @click="showNfsModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">路径</label>
+                            <input type="text" class="form-control" v-model="shareForm.path" placeholder="如: /mnt/tank/data/nfs">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">允许客户端</label>
+                            <input type="text" class="form-control" v-model="shareForm.clients" placeholder="如: 192.168.1.0/24 或 *">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">选项</label>
+                            <select class="form-control" v-model="shareForm.options">
+                                <option value="rw,sync,no_subtree_check,no_root_squash">读写</option>
+                                <option value="ro,sync,no_subtree_check">只读</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showNfsModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createNfsShare">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 快照模态框 -->
+        <div v-if="showSnapshotModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建快照</h5>
+                        <button type="button" class="btn-close" @click="showSnapshotModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">数据集</label>
+                            <input type="text" class="form-control" v-model="snapshotForm.dataset" placeholder="如: tank/data">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">快照名称</label>
+                            <input type="text" class="form-control" v-model="snapshotForm.name" placeholder="如: backup-20240326">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showSnapshotModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createSnapshot">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 用户模态框 -->
+        <div v-if="showUserModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">添加用户</h5>
+                        <button type="button" class="btn-close" @click="showUserModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" v-model="userForm.email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" v-model="userForm.username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-control" v-model="userForm.password">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">角色</label>
+                            <select class="form-control" v-model="userForm.role">
+                                <option value="user">用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showUserModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createUser">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script>
+        const { createApp, ref, computed, watch, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const API = 'http://' + location.host + '/api/v1';
+                const token = ref(localStorage.getItem('token') || '');
+                const isLoggedIn = ref(!!token.value);
+                const currentUser = ref({ username: '', email: '', role: 'user' });
+                const currentPage = ref('dashboard');
+                const currentFolderId = ref(null);
+                const currentFolderName = ref('');
+                const loading = ref(false);
+                const sidebarShow = ref(false);
+                const btnLoading = ref({});
+                
+                // 数据
+                const pools = ref([]);
+                const shares = ref({ smb: [], nfs: [] });
+                const shareLinks = ref([]);
+                const snapshots = ref([]);
+                const trashItems = ref([]);
+                const albums = ref([]);
+                const users = ref([]);
+                const files = ref([]);
+                const selectedFiles = ref(new Set());
+                const searchQuery = ref('');
+                const systemStatus = ref({ pools: 0, shares: 0, links: 0, users: 0, snapshots: 0 });
+                
+                // 表单
+                const loginForm = ref({ email: '', password: '' });
+                const profileForm = ref({ username: '', oldPassword: '', newPassword: '' });
+                const poolForm = ref({ name: '', vdevs: '', layout: 'basic' });
+                const shareForm = ref({ name: '', path: '', writable: true, guest_ok: false, clients: '*', options: 'rw,sync,no_subtree_check,no_root_squash', expires: 0, password: '' });
+                const snapshotForm = ref({ dataset: '', name: '' });
+                const userForm = ref({ email: '', username: '', password: '', role: 'user' });
+                const newFolderName = ref('');
+                const createLinkForm = ref({ fileId: '', expires: 0 });
+                
+                // 模态框
+                const showCreatePool = ref(false);
+                const showSmbModal = ref(false);
+                const showNfsModal = ref(false);
+                const showSnapshotModal = ref(false);
+                const showUserModal = ref(false);
+                const showFolderModal = ref(false);
+                const showShareModal = ref(false);
+                const showCreateLinkModal = ref(false);
+                const showRenameModal = ref(false);
+                const showMoveModal = ref(false);
+                const moveForm = ref({ targetFolderId: null, folders: [] });
+                const renameForm = ref({ id: null, name: '' });
+                
+                // 照片预览
+                const showPhotoPreview = ref(false);
+                const previewPhoto = ref(null);
+                
+                // 初始化
+                onMounted(async () => {
+                    if (token.value) {
+                        try {
+                            const res = await fetch(API + '/auth/me', { 
+                                headers: { 'Authorization': 'Bearer ' + token.value } 
+                            });
+                            if (res.ok) {
+                                currentUser.value = await res.json();
+                                profileForm.value.username = currentUser.value.username;
+                                isLoggedIn.value = true;
+                                loadData();
+                            } else {
+                                token.value = '';
+                                localStorage.removeItem('token');
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+                });
+                
+                // 监听页面变化
+                watch(currentPage, (page) => {
+                    if (page === 'dashboard') loadPools();
+                    else if (page === 'files') loadFiles();
+                    else if (page === 'shares') loadShares();
+                    else if (page === 'links') loadShareLinks();
+                    else if (page === 'snapshots') loadSnapshots();
+                    else if (page === 'trash') loadTrash();
+                    else if (page === 'albums') loadAlbums();
+                    else if (page === 'users') loadUsers();
+                });
+                
+                const loadData = () => {
+                    loadPools();
+                    loadShares();
+                    loadSnapshots();
+                    loadSystemStatus();
+                };
+                
+                // 登录
+                const handleLogin = async () => {
+                    const res = await fetch(API + '/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(loginForm.value)
+                    });
+                    
+                    if (res.ok) {
+                        const data = await res.json();
+                        token.value = data.access_token;
+                        localStorage.setItem('token', token.value);
+                        currentUser.value = data.user;
+                        profileForm.value.username = data.user.username;
+                        isLoggedIn.value = true;
+                        loadData();
+                    } else {
+                        alert('登录失败');
+                    }
+                };
+                
+                const logout = () => {
+                    token.value = '';
+                    localStorage.removeItem('token');
+                    isLoggedIn.value = false;
+                };
+                
+                // 系统状态
+                const loadSystemStatus = async () => {
+                    try {
+                        const res = await fetch(API + '/system/status', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        systemStatus.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                // 文件管理
+                const loadFiles = async () => {
+                    loading.value = true;
+                    try {
+                        let url = API + '/files';
+                        if (currentFolderId.value) url += '?parent_id=' + currentFolderId.value;
+                        const res = await fetch(url, { 
+                            headers: { 'Authorization': 'Bearer ' + token.value } 
+                        });
+                        files.value = await res.json();
+                    } catch(e) {
+                        console.error(e);
+                    }
+                    loading.value = false;
+                };
+                
+                const getFileIcon = (f) => {
+                    if (f.is_folder) return 'bi bi-folder-fill';
+                    const ext = f.name.split('.').pop().toLowerCase();
+                    if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'bi bi-image-fill';
+                    if (['mp4','avi','mov','mkv'].includes(ext)) return 'bi bi-film-fill';
+                    if (ext === 'pdf') return 'bi bi-file-earmark-pdf-fill';
+                    if (['doc','docx','txt'].includes(ext)) return 'bi bi-file-earmark-text-fill';
+                    if (['zip','rar','7z'].includes(ext)) return 'bi bi-archive-fill';
+                    return 'bi bi-file-earmark-fill';
+                };
+                
+                const handleFileClick = (f) => {
+                    if (f.is_folder) {
+                        currentFolderId.value = f.id;
+                        currentFolderName.value = f.name;
+                        loadFiles();
+                    } else {
+                        previewFile(f.id);
+                    }
+                };
+                
+                const toggleSelect = (id) => {
+                    if (selectedFiles.value.has(id)) {
+                        selectedFiles.value.delete(id);
+                    } else {
+                        selectedFiles.value.add(id);
+                    }
+                    selectedFiles.value = new Set(selectedFiles.value);
+                };
+                
+                const clearSelection = () => {
+                    selectedFiles.value = new Set();
+                };
+                
+                const formatSize = (bytes) => {
+                    if (!bytes) return '0 B';
+                    const k = 1024;
+                    const sizes = ['B', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+                };
+                
+                const formatDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    return new Date(dateStr).toLocaleString('zh-CN');
+                };
+                
+                const goHome = () => {
+                    currentFolderId.value = null;
+                    currentFolderName.value = '';
+                    loadFiles();
+                };
+                
+                const refreshFiles = () => {
+                    searchQuery.value = '';
+                    loadFiles();
+                };
+                
+                const searchFiles = async () => {
+                    if (!searchQuery.value.trim()) { loadFiles(); return; }
+                    loading.value = true;
+                    const res = await fetch(API + '/search?q=' + encodeURIComponent(searchQuery.value), {
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    const data = await res.json();
+                    files.value = data.files || [];
+                    loading.value = false;
+                };
+                
+                // 文件操作
+                const triggerUpload = () => {
+                    const input = document.getElementById('uploadInput');
+                    if (input) input.click();
+                };
+                
+                const handleUpload = async (e) => {
+                    if (e.target.files.length === 0) return;
+                    setBtnLoading('upload', true);
+                    try {
+                        for (let file of e.target.files) {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            if (currentFolderId.value) formData.append('parent_id', currentFolderId.value);
+                            await fetch(API + '/files/upload', {
+                                method: 'POST',
+                                headers: { 'Authorization': 'Bearer ' + token.value },
+                                body: formData
+                            });
+                        }
+                        showToast('上传成功', 'success');
+                        loadFiles();
+                    } catch(e) {
+                        showToast('上传失败', 'error');
+                    }
+                    setBtnLoading('upload', false);
+                    e.target.value = '';
+                };
+                
+                const createFolder = async () => {
+                    if (!newFolderName.value) return;
+                    await fetch(API + '/files/folder', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: newFolderName.value, parent_id: currentFolderId.value })
+                    });
+                    showFolderModal.value = false;
+                    newFolderName.value = '';
+                    loadFiles();
+                };
+                
+                const deleteSelected = async () => {
+                    if (selectedFiles.value.size === 0) return;
+                    if (!confirm('确定要删除选中的 ' + selectedFiles.value.size + ' 个文件吗？')) return;
+                    setBtnLoading('delete', true);
+                    try {
+                        for (let id of selectedFiles.value) {
+                            await fetch(API + '/files/' + id, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': 'Bearer ' + token.value }
+                            });
+                        }
+                        showToast('删除成功', 'success');
+                        selectedFiles.value = new Set();
+                        loadFiles();
+                    } catch(e) {
+                        showToast('删除失败', 'error');
+                    }
+                    setBtnLoading('delete', false);
+                };
+                
+                const renameFile = async () => {
+                    if (!renameForm.value.id || !renameForm.value.name) return;
+                    
+                    const res = await fetch(API + '/files/' + renameForm.value.id + '/rename', {
+                        method: 'PUT',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: renameForm.value.name })
+                    });
+                    
+                    if (res.ok) {
+                        showRenameModal.value = false;
+                        renameForm.value = { id: null, name: '' };
+                        loadFiles();
+                    } else {
+                        alert('重命名失败');
+                    }
+                };
+                
+                const prepareRename = () => {
+                    if (selectedFiles.value.size === 1) {
+                        const fileId = Array.from(selectedFiles.value)[0];
+                        const file = files.value.find(f => f.id === fileId);
+                        if (file) {
+                            renameForm.value = { id: fileId, name: file.name };
+                            showRenameModal.value = true;
+                        }
+                    }
+                };
+                
+                const previewFile = (id) => {
+                    window.open(API + '/files/' + id + '/download?token=' + token.value, '_blank');
+                };
+                
+                // 获取文件夹树
+                const loadFolders = async () => {
+                    try {
+                        const res = await fetch(API + '/files/folders', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        moveForm.value.folders = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                // 批量移动
+                const showMoveDialog = async () => {
+                    if (selectedFiles.value.size === 0) return;
+                    await loadFolders();
+                    moveForm.value.targetFolderId = null;
+                    showMoveModal.value = true;
+                };
+                
+                const moveSelected = async () => {
+                    if (!moveForm.value.targetFolderId) {
+                        showToast('请选择目标文件夹', 'error');
+                        return;
+                    }
+                    setBtnLoading('move', true);
+                    try {
+                        const fileIds = Array.from(selectedFiles.value);
+                        for (let id of fileIds) {
+                            await fetch(API + '/files/' + id + '/move', {
+                                method: 'PUT',
+                                headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ parent_id: moveForm.value.targetFolderId })
+                            });
+                        }
+                        showToast('移动成功', 'success');
+                        showMoveModal.value = false;
+                        selectedFiles.value = new Set();
+                        loadFiles();
+                    } catch(e) {
+                        showToast('移动失败', 'error');
+                    }
+                    setBtnLoading('move', false);
+                };
+                
+                // 照片预览
+                const openPhotoPreview = (photo) => {
+                    previewPhoto.value = photo;
+                    showPhotoPreview.value = true;
+                };
+                
+                const closePhotoPreview = () => {
+                    previewPhoto.value = null;
+                    showPhotoPreview.value = false;
+                };
+                
+                // 删除照片
+                const deletePhoto = async (photoId) => {
+                    if (!confirm('确定要删除这张照片吗？')) return;
+                    try {
+                        await fetch(API + '/photos/' + photoId, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        showToast('删除成功', 'success');
+                        closePhotoPreview();
+                        if (currentAlbumId.value) {
+                            viewAlbum(currentAlbumId.value);
+                        }
+                    } catch(e) {
+                        showToast('删除失败', 'error');
+                    }
+                };
+                
+                // 分享链接
+                const loadShareLinks = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/shares/links', { 
+                            headers: { 'Authorization': 'Bearer ' + token.value } 
+                        });
+                        shareLinks.value = await res.json();
+                        systemStatus.value.links = shareLinks.value.length;
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const getShareUrl = (token) => {
+                    return window.location.origin + '/share/' + token;
+                };
+                
+                const copyShareUrl = async (token) => {
+                    const url = getShareUrl(token);
+                    await navigator.clipboard.writeText(url);
+                    showToast('链接已复制到剪贴板', 'success');
+                };
+                
+                const createShareLink = async () => {
+                    if (selectedFiles.value.size === 0) {
+                        alert('请选择要分享的文件'); return;
+                    }
+                    
+                    const fileIds = Array.from(selectedFiles.value);
+                    const expires = shareForm.value.expires > 0 ? parseInt(shareForm.value.expires) : 0;
+                    
+                    const res = await fetch(API + '/shares/links', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            file_ids: fileIds,
+                            expires_days: expires,
+                            password: shareForm.value.password || null
+                        })
+                    });
+                    
+                    if (res.ok) {
+                        showShareModal.value = false;
+                        shareForm.value = { name: '', path: '', writable: true, guest_ok: false, clients: '*', options: 'rw,sync,no_subtree_check,no_root_squash', expires: 0, password: '' };
+                        loadShareLinks();
+                        alert('分享链接创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const createShareLinkFromModal = async () => {
+                    if (!createLinkForm.value.fileId) {
+                        alert('请选择文件'); return;
+                    }
+                    
+                    const expires = createLinkForm.value.expires > 0 ? parseInt(createLinkForm.value.expires) : 0;
+                    
+                    const res = await fetch(API + '/shares/links', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            file_ids: [createLinkForm.value.fileId],
+                            expires_days: expires
+                        })
+                    });
+                    
+                    if (res.ok) {
+                        showCreateLinkModal.value = false;
+                        createLinkForm.value = { fileId: '', expires: 0 };
+                        loadShareLinks();
+                        alert('分享链接创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const deleteShareLink = async (id) => {
+                    if (!confirm('确定要删除这个分享链接吗？')) return;
+                    
+                    const res = await fetch(API + '/shares/links/' + id, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        loadShareLinks();
+                        alert('删除成功');
+                    } else {
+                        alert('删除失败');
+                    }
+                };
+                
+                // 回收站
+                const loadTrash = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/trash', { 
+                            headers: { 'Authorization': 'Bearer ' + token.value } 
+                        });
+                        trashItems.value = await res.json();
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const restoreTrash = async (id) => {
+                    try {
+                        await fetch(API + '/trash/restore/' + id, {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        showToast('恢复成功', 'success');
+                        loadTrash();
+                    } catch(e) {
+                        showToast('恢复失败', 'error');
+                    }
+                };
+                
+                const permanentDelete = async (id) => {
+                    if (!confirm('确定要彻底删除吗？此操作不可恢复！')) return;
+                    try {
+                        await fetch(API + '/trash/' + id, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        showToast('删除成功', 'success');
+                        loadTrash();
+                    } catch(e) {
+                        showToast('删除失败', 'error');
+                    }
+                };
+                
+                const emptyTrash = async () => {
+                    if (trashItems.value.length === 0) {
+                        showToast('回收站已经是空的', 'info');
+                        return;
+                    }
+                    if (!confirm('确定要清空回收站吗？此操作不可恢复！')) return;
+                    
+                    const res = await fetch(API + '/trash/empty', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        showToast('回收站已清空', 'success');
+                        loadTrash();
+                    } else {
+                        showToast('清空失败', 'error');
+                    }
+                };
+                
+                // 存储池
+                const loadPools = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/storage/pools', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        pools.value = await res.json();
+                        systemStatus.value.pools = pools.value.length;
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const createPool = async () => {
+                    if (!poolForm.value.name || !poolForm.value.vdevs) {
+                        alert('请填写完整信息'); return;
+                    }
+                    
+                    const vdevs = poolForm.value.vdevs.split(' ').filter(s => s.trim());
+                    
+                    const res = await fetch(API + '/storage/pools?name=' + poolForm.value.name + 
+                        '&vdevs=' + JSON.stringify(vdevs) + '&layout=' + poolForm.value.layout, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        showCreatePool.value = false;
+                        poolForm.value = { name: '', vdevs: '', layout: 'basic' };
+                        loadPools();
+                        alert('创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const deletePool = async (name) => {
+                    if (!confirm('确定要删除存储池 ' + name + ' 吗？')) return;
+                    
+                    const res = await fetch(API + '/storage/pools/' + name + '?force=true', {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        loadPools();
+                        alert('删除成功');
+                    } else {
+                        alert('删除失败');
+                    }
+                };
+                
+                const scrubPool = async (name) => {
+                    const res = await fetch(API + '/storage/pools/' + name + '/scrub', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        alert('清理已启动');
+                    } else {
+                        alert('操作失败');
+                    }
+                };
+                
+                // 共享
+                const loadShares = async () => {
+                    try {
+                        const res = await fetch(API + '/shares', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        shares.value = await res.json();
+                        systemStatus.value.shares = (shares.value.smb?.length || 0) + (shares.value.nfs?.length || 0);
+                    } catch(e) { console.error(e); }
+                };
+                
+                const createSmbShare = async () => {
+                    if (!shareForm.value.name || !shareForm.value.path) {
+                        alert('请填写完整信息'); return;
+                    }
+                    
+                    const res = await fetch(API + '/shares/smb?name=' + shareForm.value.name + 
+                        '&path=' + shareForm.value.path + 
+                        '&writable=' + shareForm.value.writable + 
+                        '&guest_ok=' + shareForm.value.guest_ok, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        showSmbModal.value = false;
+                        shareForm.value = { name: '', path: '', writable: true, guest_ok: false, clients: '*', options: 'rw,sync,no_subtree_check,no_root_squash', expires: 0, password: '' };
+                        loadShares();
+                        alert('创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const createNfsShare = async () => {
+                    if (!shareForm.value.path) {
+                        alert('请填写路径'); return;
+                    }
+                    
+                    const res = await fetch(API + '/shares/nfs?path=' + shareForm.value.path + 
+                        '&clients=' + shareForm.value.clients + 
+                        '&options=' + shareForm.value.options, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        showNfsModal.value = false;
+                        shareForm.value = { name: '', path: '', writable: true, guest_ok: false, clients: '*', options: 'rw,sync,no_subtree_check,no_root_squash', expires: 0, password: '' };
+                        loadShares();
+                        alert('创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const deleteShare = async (type, name) => {
+                    if (!confirm('确定要删除这个共享吗？')) return;
+                    
+                    const res = await fetch(API + '/shares/' + type + '/' + name, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        loadShares();
+                        alert('删除成功');
+                    } else {
+                        alert('删除失败');
+                    }
+                };
+                
+                const copyShareLink = (type, name) => {
+                    let link = type === 'smb' 
+                        ? '\\\\' + location.host + '\\' + name
+                        : location.host + ':' + name;
+                    navigator.clipboard.writeText(link);
+                    showToast('链接已复制到剪贴板', 'success');
+                };
+                
+                // 快照
+                const loadSnapshots = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/snapshots', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        snapshots.value = await res.json();
+                        systemStatus.value.snapshots = snapshots.value.length;
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const createSnapshot = async () => {
+                    if (!snapshotForm.value.dataset || !snapshotForm.value.name) {
+                        alert('请填写完整信息'); return;
+                    }
+                    
+                    const res = await fetch(API + '/snapshots?dataset=' + snapshotForm.value.dataset + 
+                        '&name=' + snapshotForm.value.name, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        showSnapshotModal.value = false;
+                        snapshotForm.value = { dataset: '', name: '' };
+                        loadSnapshots();
+                        alert('创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const deleteSnapshot = async (name) => {
+                    if (!confirm('确定要删除快照吗？')) return;
+                    
+                    const res = await fetch(API + '/snapshots/' + name, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        loadSnapshots();
+                        alert('删除成功');
+                    } else {
+                        alert('删除失败');
+                    }
+                };
+                
+                const rollbackSnapshot = async (name) => {
+                    if (!confirm('警告: 回滚将丢失快照之后的所有更改! 继续吗?')) return;
+                    
+                    const res = await fetch(API + '/snapshots/' + name + '/rollback', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        alert('回滚成功');
+                    } else {
+                        alert('回滚失败');
+                    }
+                };
+                
+                // 相册
+                const currentAlbumId = ref(null);
+                const currentAlbumPhotos = ref([]);
+                const toasts = ref([]);
+                
+                // Toast提示
+                const showToast = (message, type = 'info') => {
+                    const id = Date.now();
+                    toasts.value.push({ id, message, type });
+                    setTimeout(() => {
+                        toasts.value = toasts.value.filter(t => t.id !== id);
+                    }, 3000);
+                };
+                
+                // 按钮loading状态
+                const setBtnLoading = (key, loading) => {
+                    btnLoading.value = { ...btnLoading.value, [key]: loading };
+                };
+                
+                const loadAlbums = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/albums', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        albums.value = await res.json();
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const viewAlbum = async (albumId) => {
+                    currentAlbumId.value = albumId;
+                    try {
+                        const res = await fetch(API + '/albums/' + albumId, {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        const album = await res.json();
+                        currentAlbumPhotos.value = album.photos || [];
+                        // 切换到相册详情视图
+                        currentPage.value = 'album-detail';
+                    } catch(e) { 
+                        console.error(e); 
+                        alert('加载相册失败');
+                    }
+                };
+                
+                const handlePhotoUpload = async (e) => {
+                    // 如果在相册详情页，上传到当前相册；否则提示选择相册
+                    const albumId = currentAlbumId.value;
+                    for (let file of e.target.files) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('name', file.name);
+                        if (albumId) {
+                            formData.append('album_id', albumId);
+                        }
+                        const res = await fetch(API + '/photos/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value },
+                            body: formData
+                        });
+                        if (!res.ok) {
+                            const err = await res.json();
+                            alert('上传失败: ' + (err.detail || '未知错误'));
+                            return;
+                        }
+                    }
+                    // 刷新当前视图
+                    if (currentAlbumId.value) {
+                        viewAlbum(currentAlbumId.value);
+                    } else {
+                        loadAlbums();
+                    }
+                    alert('上传成功');
+                    e.target.value = '';
+                };
+                
+                const createAlbum = async () => {
+                    const name = prompt('请输入相册名称:');
+                    if (!name) return;
+                    const res = await fetch(API + '/albums', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
+                    });
+                    loadAlbums();
+                };
+                
+                // 用户
+                const loadUsers = async () => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/users', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        users.value = await res.json();
+                        systemStatus.value.users = users.value.length;
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const createUser = async () => {
+                    if (!userForm.value.email || !userForm.value.username || !userForm.value.password) {
+                        alert('请填写完整信息'); return;
+                    }
+                    
+                    const res = await fetch(API + '/users', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(userForm.value)
+                    });
+                    
+                    if (res.ok) {
+                        showUserModal.value = false;
+                        userForm.value = { email: '', username: '', password: '', role: 'user' };
+                        loadUsers();
+                        alert('创建成功');
+                    } else {
+                        alert('创建失败');
+                    }
+                };
+                
+                const deleteUser = async (id) => {
+                    if (!confirm('确定要删除用户吗？')) return;
+                    
+                    const res = await fetch(API + '/users/' + id, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    });
+                    
+                    if (res.ok) {
+                        loadUsers();
+                        alert('删除成功');
+                    } else {
+                        alert('删除失败');
+                    }
+                };
+                
+                // 个人资料
+                const updateProfile = async () => {
+                    alert('功能开发中');
+                };
+                
+                const changePassword = async () => {
+                    if (!profileForm.value.oldPassword || !profileForm.value.newPassword) {
+                        alert('请填写密码'); return;
+                    }
+                    
+                    const res = await fetch(API + '/users/me/password', {
+                        method: 'PUT',
+                        headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ old_password: profileForm.value.oldPassword, new_password: profileForm.value.newPassword })
+                    });
+                    
+                    if (res.ok) {
+                        alert('密码修改成功');
+                        profileForm.value.oldPassword = '';
+                        profileForm.value.newPassword = '';
+                    } else {
+                        alert('修改失败，请检查当前密码');
+                    }
+                };
+                
+                return {
+                    token, isLoggedIn, currentUser, currentPage, currentFolderId, currentFolderName, loading, sidebarShow, btnLoading,
+                    pools, shares, shareLinks, snapshots, trashItems, users, files, selectedFiles, searchQuery, systemStatus,
+                    loginForm, profileForm, poolForm, shareForm, snapshotForm, userForm, newFolderName, createLinkForm, renameForm,
+                    showCreatePool, showSmbModal, showNfsModal, showSnapshotModal, showUserModal, showFolderModal, showShareModal, showCreateLinkModal, showRenameModal, showMoveModal, moveForm,
+                    toasts, showToast, setBtnLoading,
+                    showPhotoPreview, previewPhoto, openPhotoPreview, closePhotoPreview, deletePhoto,
+                    handleLogin, logout, loadData, loadPools, createPool, deletePool, scrubPool,
+                    loadShares, createSmbShare, createNfsShare, deleteShare, copyShareLink,
+                    loadShareLinks, getShareUrl, copyShareUrl, createShareLink, createShareLinkFromModal, deleteShareLink,
+                    loadSnapshots, createSnapshot, deleteSnapshot, rollbackSnapshot,
+                    loadTrash, restoreTrash, permanentDelete, emptyTrash,
+                    loadAlbums, handlePhotoUpload, createAlbum, viewAlbum, currentAlbumId, currentAlbumPhotos,
+                    loadUsers, createUser, deleteUser, updateProfile, changePassword,
+                    loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, formatSize, formatDate, goHome, refreshFiles, searchFiles,
+                    handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, renameFile, prepareRename,
+                    loadFolders, showMoveDialog, moveSelected, currentAlbumId, currentAlbumPhotos
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
