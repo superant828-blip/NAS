@@ -196,7 +196,7 @@ class ZFSManager:
         try:
             output = self._run_cmd([
                 "zfs", "list", "-r", "-o",
-                "name,pool,used,available,referenced,mountpoint,"
+                "name,used,available,referenced,mountpoint,"
                 "compression,dedup,readonly,atime,quota,reservation,snapdir",
                 "-H", "-t", "filesystem"
             ])
@@ -209,20 +209,24 @@ class ZFSManager:
                 continue
             parts = line.split('\t')
             if len(parts) >= 6:
+                # 从name中提取池名 (如 "nas-pool/data" -> "nas-pool")
+                dataset_name = parts[0]
+                pool_name = dataset_name.split('/')[0] if '/' in dataset_name else dataset_name
+                
                 ds = ZFSDataset(
-                    name=parts[0],
-                    pool=parts[1],
-                    used=parts[2],
-                    available=parts[3],
-                    referenced=parts[4],
-                    mountpoint=parts[5],
-                    compression=parts[6] if len(parts) > 6 else "off",
-                    dedup=parts[7] if len(parts) > 7 else "off",
-                    readonly=parts[8] if len(parts) > 8 else "off",
-                    atime=parts[9] if len(parts) > 9 else "on",
-                    quota=parts[10] if len(parts) > 10 else "none",
-                    reservation=parts[11] if len(parts) > 11 else "none",
-                    snapdir=parts[12] if len(parts) > 12 else "hidden"
+                    name=dataset_name,
+                    pool=pool_name,
+                    used=parts[1],
+                    available=parts[2],
+                    referenced=parts[3],
+                    mountpoint=parts[4],
+                    compression=parts[5] if len(parts) > 5 else "off",
+                    dedup=parts[6] if len(parts) > 6 else "off",
+                    readonly=parts[7] if len(parts) > 7 else "off",
+                    atime=parts[8] if len(parts) > 8 else "on",
+                    quota=parts[9] if len(parts) > 9 else "none",
+                    reservation=parts[10] if len(parts) > 10 else "none",
+                    snapdir=parts[11] if len(parts) > 11 else "hidden"
                 )
                 if pool is None or ds.pool == pool:
                     datasets.append(ds)
