@@ -725,7 +725,7 @@ async def upload_file(
             parent = cursor.fetchone()
             if parent:
                 depth = parent['depth'] + 1
-                parent_path = parent.get('full_path', '') or ''
+                parent_dict = dict(parent); parent_path = parent_dict.get('full_path', '') or ''
         
         full_path = f"{parent_path}/{file.filename}" if parent_path else f"/{file.filename}"
         
@@ -873,7 +873,7 @@ async def merge_chunks(
             parent = cursor.fetchone()
             if parent:
                 depth = parent['depth'] + 1
-                parent_path = parent.get('full_path', '') or ''
+                parent_dict = dict(parent); parent_path = parent_dict.get('full_path', '') or ''
         
         full_path = f"{parent_path}/{filename}" if parent_path else f"/{filename}"
         
