@@ -2186,9 +2186,15 @@
                         const res = await fetch(url, { 
                             headers: { 'Authorization': 'Bearer ' + token.value } 
                         });
-                        files.value = await res.json();
+                        if (!res.ok) {
+                            files.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        files.value = Array.isArray(data) ? data : [];
                     } catch(e) {
                         console.error(e);
+                        files.value = [];
                     }
                     loading.value = false;
                 };
@@ -2362,8 +2368,16 @@
                         const res = await fetch(API + '/files/folders', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        moveForm.value.folders = await res.json();
-                    } catch(e) { console.error(e); }
+                        if (!res.ok) {
+                            moveForm.value.folders = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        moveForm.value.folders = Array.isArray(data) ? data : [];
+                    } catch(e) { 
+                        console.error(e); 
+                        moveForm.value.folders = [];
+                    }
                 };
                 
                 // 批量移动
@@ -2435,9 +2449,17 @@
                         const res = await fetch(API + '/shares/links', { 
                             headers: { 'Authorization': 'Bearer ' + token.value } 
                         });
-                        shareLinks.value = await res.json();
+                        if (!res.ok) {
+                            shareLinks.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        shareLinks.value = Array.isArray(data) ? data : [];
                         systemStatus.value.links = shareLinks.value.length;
-                    } catch(e) { console.error(e); }
+                    } catch(e) { 
+                        console.error(e); 
+                        shareLinks.value = [];
+                    }
                     loading.value = false;
                 };
                 
@@ -2528,8 +2550,16 @@
                         const res = await fetch(API + '/trash', { 
                             headers: { 'Authorization': 'Bearer ' + token.value } 
                         });
-                        trashItems.value = await res.json();
-                    } catch(e) { console.error(e); }
+                        if (!res.ok) {
+                            trashItems.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        trashItems.value = Array.isArray(data) ? data : [];
+                    } catch(e) { 
+                        console.error(e); 
+                        trashItems.value = [];
+                    }
                     loading.value = false;
                 };
                 
@@ -2587,9 +2617,17 @@
                         const res = await fetch(API + '/storage/pools', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        pools.value = await res.json();
+                        if (!res.ok) {
+                            pools.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        pools.value = Array.isArray(data) ? data : [];
                         systemStatus.value.pools = pools.value.length;
-                    } catch(e) { console.error(e); }
+                    } catch(e) { 
+                        console.error(e); 
+                        pools.value = [];
+                    }
                     loading.value = false;
                 };
                 
@@ -2648,12 +2686,20 @@
                 // 共享
                 const loadShares = async () => {
                     try {
-                        const res = await fetch(API + '/shares', {
+                        const res = await fetch(API + '/shares/all', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        shares.value = await res.json();
+                        if (!res.ok) {
+                            shares.value = { smb: [], nfs: [] };
+                            return;
+                        }
+                        const data = await res.json();
+                        shares.value = { smb: data.smb || [], nfs: data.nfs || [] };
                         systemStatus.value.shares = (shares.value.smb?.length || 0) + (shares.value.nfs?.length || 0);
-                    } catch(e) { console.error(e); }
+                    } catch(e) { 
+                        console.error(e); 
+                        shares.value = { smb: [], nfs: [] };
+                    }
                 };
                 
                 const createSmbShare = async () => {
@@ -2732,9 +2778,17 @@
                         const res = await fetch(API + '/snapshots', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        snapshots.value = await res.json();
+                        if (!res.ok) {
+                            snapshots.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        snapshots.value = Array.isArray(data) ? data : [];
                         systemStatus.value.snapshots = snapshots.value.length;
-                    } catch(e) { console.error(e); }
+                    } catch(e) { 
+                        console.error(e); 
+                        snapshots.value = [];
+                    }
                     loading.value = false;
                 };
                 
@@ -2815,8 +2869,16 @@
                         const res = await fetch(API + '/albums', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        albums.value = await res.json();
-                    } catch(e) { console.error(e); }
+                        if (!res.ok) {
+                            albums.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        albums.value = Array.isArray(data) ? data : [];
+                    } catch(e) { 
+                        console.error(e); 
+                        albums.value = [];
+                    }
                     loading.value = false;
                 };
                 
@@ -2885,9 +2947,17 @@
                         const res = await fetch(API + '/users', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        users.value = await res.json();
+                        if (!res.ok) {
+                            users.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        users.value = Array.isArray(data) ? data : [];
                         systemStatus.value.users = users.value.length;
-                    } catch(e) { console.error(e); }
+                    } catch(e) { 
+                        console.error(e); 
+                        users.value = [];
+                    }
                     loading.value = false;
                 };
                 

@@ -89,6 +89,9 @@ class ZFSManager:
             if check and result.returncode != 0:
                 raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{result.stderr}")
             return result.stdout.strip()
+        except FileNotFoundError:
+            # 命令不存在 (如zpool/zfs未安装)
+            raise RuntimeError(f"Command not found: {cmd[0]}")
         except subprocess.TimeoutExpired:
             raise TimeoutError(f"Command timeout: {' '.join(cmd)}")
     

@@ -49,10 +49,14 @@ class SnapshotManager:
     
     def _run_cmd(self, cmd: List[str], check: bool = True) -> str:
         """执行命令"""
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        if check and result.returncode != 0:
-            raise RuntimeError(f"Command failed: {result.stderr}")
-        return result.stdout
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            if check and result.returncode != 0:
+                raise RuntimeError(f"Command failed: {result.stderr}")
+            return result.stdout
+        except FileNotFoundError:
+            # 命令不存在 (如zfs未安装)
+            raise RuntimeError(f"Command not found: {cmd[0]}")
     
     def list_snapshots(self, pool: str = None, dataset: str = None) -> List[ZFSSnapshot]:
         """列出快照"""
