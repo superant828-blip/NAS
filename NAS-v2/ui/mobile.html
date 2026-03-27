@@ -1169,12 +1169,25 @@
                 };
                 
                 const downloadFile = (f) => {
-                    const link = document.createElement('a');
-                    link.href = API + '/files/' + f.id + '/download';
-                    link.download = f.name;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // 使用fetch下载并创建blob下载
+                    fetch(API + '/files/' + f.id + '/download', {
+                        headers: { 'Authorization': 'Bearer ' + token.value }
+                    })
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = f.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        showToast('下载失败', 'error');
+                    });
                 };
                 
                 // 重命名
