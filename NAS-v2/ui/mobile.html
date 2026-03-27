@@ -209,6 +209,24 @@
         }
         
         .file-icon.folder { color: #ffc107; }
+        
+        .file-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-right: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-dark);
+        }
+        
+        .file-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .file-icon.image { color: #4facfe; }
         .file-icon.video { color: #f093fb; }
         .file-icon.pdf { color: #ff6b6b; }
@@ -503,7 +521,10 @@
                     <div v-else>
                         <div v-for="f in files" :key="f.id" class="file-item" :class="{ selected: selectedFiles.has(f.id) }">
                             <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
-                            <div class="file-icon" :class="{ folder: f.is_folder }" @click="handleFileClick(f)">
+                            <div class="file-thumb" :class="{ folder: f.is_folder }" @click="handleFileClick(f)" v-if="f.is_image && !f.is_folder">
+                                <img :src="API + '/files/' + f.id + '/thumbnail?size=100'" @error="f.is_image=false">
+                            </div>
+                            <div class="file-icon" :class="{ folder: f.is_folder }" @click="handleFileClick(f)" v-else>
                                 <i :class="getFileIcon(f)"></i>
                             </div>
                             <div class="file-info" @click="handleFileClick(f)">
@@ -513,6 +534,15 @@
                             <div class="file-actions">
                                 <button v-if="!f.is_folder" @click.stop="downloadFile(f)" title="下载">
                                     <i class="bi bi-download"></i>
+                                </button>
+                                <button @click.stop="showRenameDialog(f)" title="重命名">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button @click.stop="showMoveDialog(f)" title="移动">
+                                    <i class="bi bi-folder-fill"></i>
+                                </button>
+                                <button @click.stop="confirmDelete(f)" title="删除" style="color:var(--danger)">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </div>
                         </div>
@@ -743,6 +773,51 @@
             </div>
         </div>
         
+        <!-- 重命名弹窗 -->
+        <div v-if="showRename" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">重命名</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="showRename = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" class="form-control" v-model="renameForm.name" @keyup.enter="doRename">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showRename = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="doRename">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动弹窗 -->
+        <div v-if="showMove" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">移动到</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="showMove = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" :value="null" v-model="moveForm.targetFolderId" id="rootFolder">
+                            <label class="form-check-label" for="rootFolder">根目录</label>
+                        </div>
+                        <div v-for="folder in moveForm.folders" :key="folder.id" class="form-check mb-2">
+                            <input class="form-check-input" type="radio" :value="folder.id" v-model="moveForm.targetFolderId" :id="'folder'+folder.id">
+                            <label class="form-check-label" :for="'folder'+folder.id">{{ folder.full_path || folder.name }}</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showMove = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="doMove">移动</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Toast -->
         <div class="toast-container">
             <div v-for="toast in toasts" :key="toast.id" class="toast-msg">
@@ -914,7 +989,15 @@
                         let url = API + '/files';
                         if (currentFolderId.value) url += '?parent_id=' + currentFolderId.value;
                         const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token.value } });
-                        if (res.ok) files.value = await res.json();
+                        if (res.ok) {
+                            const data = await res.json();
+                            // 检测图片文件
+                            const imageExts = ['jpg','jpeg','png','gif','webp','bmp'];
+                            files.value = data.map(f => ({
+                                ...f,
+                                is_image: !f.is_folder && imageExts.includes((f.name || '').split('.').pop().toLowerCase())
+                            }));
+                        }
                     } catch(e) { console.error(e); }
                     loading.value = false;
                 };
@@ -950,6 +1033,72 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                };
+                
+                // 重命名
+                const renameForm = ref({ id: null, name: '' });
+                const showRename = ref(false);
+                
+                const showRenameDialog = (f) => {
+                    renameForm.value = { id: f.id, name: f.name };
+                    showRename.value = true;
+                };
+                
+                const doRename = async () => {
+                    if (!renameForm.value.name || !renameForm.value.id) return;
+                    try {
+                        await fetch(API + '/files/' + renameForm.value.id + '/rename', {
+                            method: 'PUT',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: renameForm.value.name })
+                        });
+                        showToast('重命名成功');
+                        showRename.value = false;
+                        loadFiles();
+                    } catch(e) { showToast('重命名失败', 'error'); }
+                };
+                
+                // 移动
+                const moveForm = ref({ id: null, targetFolderId: null, folders: [] });
+                const showMove = ref(false);
+                
+                const showMoveDialog = async (f) => {
+                    moveForm.value = { id: f.id, targetFolderId: null, folders: [] };
+                    try {
+                        const res = await fetch(API + '/folders', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) {
+                            const data = await res.json();
+                            moveForm.value.folders = data.filter(folder => folder.id !== f.id);
+                        }
+                    } catch(e) { console.error(e); }
+                    showMove.value = true;
+                };
+                
+                const doMove = async () => {
+                    if (!moveForm.value.id) return;
+                    try {
+                        await fetch(API + '/files/' + moveForm.value.id + '/move', {
+                            method: 'PUT',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ parent_id: moveForm.value.targetFolderId })
+                        });
+                        showToast('移动成功');
+                        showMove.value = false;
+                        loadFiles();
+                    } catch(e) { showToast('移动失败', 'error'); }
+                };
+                
+                // 删除
+                const confirmDelete = async (f) => {
+                    if (!confirm('确定要删除 ' + f.name + ' 吗？')) return;
+                    try {
+                        await fetch(API + '/files/' + f.id, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        showToast('删除成功');
+                        loadFiles();
+                    } catch(e) { showToast('删除失败', 'error'); }
                 };
                 
                 const toggleSelect = (id) => {
@@ -1130,11 +1279,13 @@
                     pools, datasets, shares, snapshots, albums, users, files,
                     loginForm, profileForm, userForm, snapshotForm, newFolderName,
                     showFolderModal, showSnapshotModal, showUserModal, btnLoading,
-                    pageTitle, toasts,
+                    pageTitle, toasts, API,
+                    renameForm, showRename, moveForm, showMove,
                     handleLogin, logout, loadData, loadPools, loadDatasets, loadFiles,
                     getFileIcon, formatSize, handleFileClick, goParent, createFolder, triggerUpload, handleUpload,
                     triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum,
-                    createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, selectedFiles, toggleSelect, downloadFile
+                    createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, 
+                    selectedFiles, toggleSelect, downloadFile, showRenameDialog, doRename, showMoveDialog, doMove, confirmDelete
                 };
             }
         }).mount('#app');
