@@ -133,7 +133,7 @@ class FileMove(BaseModel):
 
 # ==================== 依赖注入 ====================
 
-def get_current_user(authorization: str = Header(None)) -> User:
+def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     """获取当前用户"""
     if not authorization or not authorization.startswith("Bearer "):
             authorization = str(authorization) if authorization else None
