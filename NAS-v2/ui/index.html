@@ -1474,7 +1474,7 @@
                             <h4 class="page-title"><i class="bi bi-camera-fill"></i>快照管理</h4>
                         </div>
                         <div class="toolbar">
-                            <button class="toolbar-btn toolbar-btn-primary" @click="showSnapshotModal = true">
+                            <button class="toolbar-btn toolbar-btn-primary" @click="showSnapshotModal = true; loadDatasets()">
                                 <i class="bi bi-plus-circle"></i> 创建快照
                             </button>
                             <button class="toolbar-btn" @click="loadSnapshots">
@@ -2000,7 +2000,10 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">数据集</label>
-                            <input type="text" class="form-control" v-model="snapshotForm.dataset" placeholder="如: tank/data">
+                            <select class="form-select" v-model="snapshotForm.dataset">
+                                <option value="">请选择数据集</option>
+                                <option v-for="ds in datasets" :key="ds.name" :value="ds.name">{{ ds.name }}</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">快照名称</label>
@@ -2073,6 +2076,7 @@ console.log("NAS App Loading...");
                 
                 // 数据
                 const pools = ref([]);
+                const datasets = ref([]);
                 const shares = ref({ smb: [], nfs: [] });
                 const shareLinks = ref([]);
                 const snapshots = ref([]);
@@ -2720,6 +2724,23 @@ console.log("NAS App Loading...");
                         pools.value = [];
                     }
                     loading.value = false;
+                };
+                
+                const loadDatasets = async () => {
+                    try {
+                        const res = await fetch(API + '/storage/datasets', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        if (!res.ok) {
+                            datasets.value = [];
+                            return;
+                        }
+                        const data = await res.json();
+                        datasets.value = Array.isArray(data) ? data : [];
+                    } catch(e) { 
+                        console.error(e); 
+                        datasets.value = [];
+                    }
                 };
                 
                 const createPool = async () => {
