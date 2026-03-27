@@ -3006,6 +3006,11 @@ console.log("NAS App Loading...");
                 };
                 
                 const createUser = async () => {
+                    // 检查token
+                    if (!token.value) {
+                        alert('登录已过期，请重新登录'); return;
+                    }
+                    
                     if (!userForm.value.email || !userForm.value.username || !userForm.value.password) {
                         alert('请填写完整信息'); return;
                     }
@@ -3027,6 +3032,8 @@ console.log("NAS App Loading...");
                         userForm.value = { email: '', username: '', password: '', role: 'user' };
                         loadUsers();
                         showToast('用户创建成功', 'success');
+                    } else if (res.status === 401) {
+                        alert('登录已过期，请重新登录');
                     } else {
                         const err = await res.json();
                         const msg = err.detail || err.message || JSON.stringify(err);
