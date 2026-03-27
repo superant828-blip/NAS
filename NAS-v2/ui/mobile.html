@@ -182,11 +182,23 @@
         .file-item {
             display: flex;
             align-items: center;
-            padding: 14px 12px;
+            padding: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 10px;
             margin-bottom: 8px;
+        }
+        
+        .file-item.selected {
+            border-color: var(--primary);
+            background: rgba(0,145,234,0.1);
+        }
+        
+        .file-checkbox {
+            width: 22px;
+            height: 22px;
+            margin-right: 12px;
+            accent-color: var(--primary);
         }
         
         .file-icon {
@@ -215,7 +227,7 @@
         
         .file-actions {
             display: flex;
-            gap: 8px;
+            gap: 4px;
         }
         
         .file-actions button {
@@ -489,13 +501,19 @@
                         <p>文件夹为空</p>
                     </div>
                     <div v-else>
-                        <div v-for="f in files" :key="f.id" class="file-item" @click="handleFileClick(f)">
-                            <div class="file-icon" :class="{ folder: f.is_folder }">
+                        <div v-for="f in files" :key="f.id" class="file-item" :class="{ selected: selectedFiles.has(f.id) }">
+                            <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
+                            <div class="file-icon" :class="{ folder: f.is_folder }" @click="handleFileClick(f)">
                                 <i :class="getFileIcon(f)"></i>
                             </div>
-                            <div class="file-info">
+                            <div class="file-info" @click="handleFileClick(f)">
                                 <div class="file-name">{{ f.name }}</div>
                                 <div class="file-size">{{ f.is_folder ? '文件夹' : formatSize(f.size) }}</div>
+                            </div>
+                            <div class="file-actions">
+                                <button v-if="!f.is_folder" @click.stop="downloadFile(f)" title="下载">
+                                    <i class="bi bi-download"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -757,6 +775,7 @@
                 const albums = ref([]);
                 const users = ref([]);
                 const files = ref([]);
+                const selectedFiles = ref(new Set());
                 
                 const loginForm = ref({ email: '', password: '' });
                 const profileForm = ref({ username: '', oldPassword: '', newPassword: '' });
@@ -921,10 +940,25 @@
                     if (f.is_folder) {
                         currentFolderId.value = f.id;
                         loadFiles();
-                    } else {
-                        // 预览或下载
-                        window.open(API + '/files/' + f.id + '/download?token=' + token.value);
                     }
+                };
+                
+                const downloadFile = (f) => {
+                    const link = document.createElement('a');
+                    link.href = API + '/files/' + f.id + '/download';
+                    link.download = f.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+                
+                const toggleSelect = (id) => {
+                    if (selectedFiles.value.has(id)) {
+                        selectedFiles.value.delete(id);
+                    } else {
+                        selectedFiles.value.add(id);
+                    }
+                    selectedFiles.value = new Set(selectedFiles.value);
                 };
                 
                 const goParent = async () => {
@@ -1100,7 +1134,7 @@
                     handleLogin, logout, loadData, loadPools, loadDatasets, loadFiles,
                     getFileIcon, formatSize, handleFileClick, goParent, createFolder, triggerUpload, handleUpload,
                     triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum,
-                    createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles
+                    createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, selectedFiles, toggleSelect, downloadFile
                 };
             }
         }).mount('#app');
