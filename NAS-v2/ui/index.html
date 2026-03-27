@@ -2100,6 +2100,13 @@ console.log("NAS App Loading...");
                 const newFolderName = ref('');
                 const createLinkForm = ref({ fileId: '', expires: 0 });
                 
+                // 监听分享模态框打开，自动填充选中的文件
+                watch(() => showShareModal.value, (newVal) => {
+                    if (newVal && selectedFiles.size > 0) {
+                        createLinkForm.value.fileId = Array.from(selectedFiles)[0];
+                    }
+                });
+                
                 // 模态框
                 const showCreatePool = ref(false);
                 const showSmbModal = ref(false);
@@ -3049,7 +3056,13 @@ console.log("NAS App Loading...");
                         headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ name })
                     });
-                    loadAlbums();
+                    if (res.ok) {
+                        showToast('相册创建成功', 'success');
+                        loadAlbums();
+                    } else {
+                        const err = await res.json();
+                        showToast('创建失败: ' + (err.detail || '未知错误'), 'error');
+                    }
                 };
                 
                 // 用户

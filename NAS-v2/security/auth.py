@@ -641,7 +641,20 @@ class AuthManager:
         if not user or not user.enabled:
             return None
         
-        if bcrypt.verify(password, user.password_hash):
+        # 密码验证 - 兼容明文和哈希两种格式
+        password_valid = False
+        try:
+            password_valid = bcrypt.verify(password, user.password_hash)
+        except (ValueError, TypeError) as e:
+            # 可能是旧系统的明文密码
+            if user.password_hash == password:
+                password_valid = True
+                # 升级为哈希存储
+                user.password_hash = bcrypt.hash(password)
+                self.update_password(user.id, password)
+                logger.info(f"Upgraded plaintext password for user {user.id} to bcrypt hash")
+        
+        if password_valid:
             # 更新最后登录时间
             now = datetime.now().isoformat()
             if config.db_type == "mysql":
@@ -727,7 +740,16 @@ class AuthManager:
         if not user:
             return {"status": "error", "message": "User not found"}
         
-        if not bcrypt.verify(old_password, user.password_hash):
+        # 验证旧密码 - 兼容明文和哈希
+        old_valid = False
+        try:
+            old_valid = bcrypt.verify(old_password, user.password_hash)
+        except (ValueError, TypeError):
+            # 兼容明文密码
+            if user.password_hash == old_password:
+                old_valid = True
+        
+        if not old_valid:
             return {"status": "error", "message": "Invalid old password"}
         
         new_hash = bcrypt.hash(new_password)
