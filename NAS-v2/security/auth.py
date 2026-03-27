@@ -4,7 +4,10 @@
 融合 NAS 项目的数据表结构
 """
 import os
+import sys
 import secrets
+import hashlib
+import logging
 import pymysql
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -12,12 +15,20 @@ from typing import Optional, Dict, List
 from contextlib import contextmanager
 
 import jwt
-from passlib.hash import bcrypt
+
+# 密码验证
+try:
+    from passlib.hash import bcrypt
+    HAS_BCRYPT = True
+except ImportError:
+    HAS_BCRYPT = False
+    bcrypt = None
 
 # 导入配置
-import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.config import config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -28,9 +39,9 @@ class User:
     email: str
     password_hash: str
     role: str  # admin, user
-    created_at: str
-    last_login: Optional[str] = None
     enabled: bool = True
+    created_at: str = ""
+    last_login: Optional[str] = None
     
     @property
     def is_admin(self) -> bool:
@@ -638,21 +649,32 @@ class AuthManager:
         """验证用户登录"""
         user = self.get_user(username=login) or self.get_user(email=login)
         
-        if not user or not user.enabled:
+        if not user:
             return None
         
-        # 密码验证 - 兼容明文和哈希两种格式
+        # 检查用户是否启用
+        if hasattr(user, 'enabled') and not user.enabled:
+            return None
+        
+        # 密码验证 - 兼容明文、SHA256和bcrypt
         password_valid = False
-        try:
-            password_valid = bcrypt.verify(password, user.password_hash)
-        except (ValueError, TypeError) as e:
-            # 可能是旧系统的明文密码
-            if user.password_hash == password:
-                password_valid = True
-                # 升级为哈希存储
-                user.password_hash = bcrypt.hash(password)
-                self.update_password(user.id, password)
-                logger.info(f"Upgraded plaintext password for user {user.id} to bcrypt hash")
+        
+        # 1. 首先检查明文密码
+        if user.password_hash == password:
+            password_valid = True
+            logger.info(f"Plaintext password validated for user {user.id}")
+        # 2. 检查SHA256哈希
+        elif user.password_hash == hashlib.sha256(password.encode()).hexdigest():
+            password_valid = True
+            logger.info(f"SHA256 password validated for user {user.id}")
+        # 3. 尝试bcrypt验证
+        elif HAS_BCRYPT and bcrypt:
+            try:
+                if bcrypt.verify(password, user.password_hash):
+                    password_valid = True
+                    logger.info(f"BCrypt password validated for user {user.id}")
+            except (ValueError, TypeError):
+                pass  # 不是bcrypt格式
         
         if password_valid:
             # 更新最后登录时间
