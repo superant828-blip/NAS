@@ -646,6 +646,40 @@
                     </div>
                 </div>
                 
+                <!-- 回收站 -->
+                <div v-show="currentPage === 'trash'">
+                    <div class="toolbar">
+                        <button class="toolbar-btn" @click="emptyTrash" v-if="trashItems.length">
+                            <i class="bi bi-trash"></i> 清空回收站
+                        </button>
+                    </div>
+                    
+                    <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                    <div v-else-if="!trashItems.length" class="empty-state">
+                        <i class="bi bi-trash"></i>
+                        <p>回收站为空</p>
+                    </div>
+                    <div v-else>
+                        <div v-for="item in trashItems" :key="item.id" class="file-item">
+                            <div class="file-icon">
+                                <i :class="item.is_folder ? 'bi bi-folder-fill' : 'bi bi-file-earmark'"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ item.name }}</div>
+                                <div class="file-size">{{ item.deleted_at ? '删除于 ' + item.deleted_at : '' }}</div>
+                            </div>
+                            <div class="file-actions">
+                                <button @click="restoreTrash(item.id)" title="恢复">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                                <button @click="permanentDelete(item.id)" title="彻底删除" style="color:var(--danger)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- 用户 -->
                 <div v-show="currentPage === 'users'">
                     <div v-if="currentUser.role !== 'admin'" class="empty-state">
@@ -722,6 +756,10 @@
                 <div class="nav-item" :class="{ active: currentPage === 'snapshots' }" @click="currentPage = 'snapshots'">
                     <i class="bi bi-camera"></i>
                     <span>快照</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentPage === 'trash' }" @click="currentPage = 'trash'">
+                    <i class="bi bi-trash"></i>
+                    <span>回收站</span>
                 </div>
                 <div class="nav-item" :class="{ active: currentPage === 'profile' }" @click="currentPage = 'profile'">
                     <i class="bi bi-person"></i>
@@ -915,6 +953,7 @@
                 const datasets = ref([]);
                 const shares = ref({ smb: [], nfs: [] });
                 const snapshots = ref([]);
+                const trashItems = ref([]);
                 const albums = ref([]);
                 const users = ref([]);
                 const files = ref([]);
@@ -968,6 +1007,7 @@
                     else if (page === 'files') loadFiles();
                     else if (page === 'albums') loadAlbums();
                     else if (page === 'snapshots') loadSnapshots();
+                    else if (page === 'trash') loadTrash();
                     else if (page === 'users') loadUsers();
                 });
                 
@@ -975,6 +1015,7 @@
                     loadPools();
                     loadShares();
                     loadSnapshots();
+                    loadTrash();
                     loadAlbums();
                     loadUsers();
                 };
@@ -1035,6 +1076,39 @@
                         const res = await fetch(API + '/snapshots', { headers: { 'Authorization': 'Bearer ' + token.value } });
                         if (res.ok) snapshots.value = await res.json();
                     } catch(e) { console.error(e); }
+                };
+                
+                const loadTrash = async () => {
+                    try {
+                        const res = await fetch(API + '/trash', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) trashItems.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const restoreTrash = async (id) => {
+                    try {
+                        await fetch(API + '/trash/' + id + '/restore', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token.value } });
+                        showToast('恢复成功');
+                        loadTrash();
+                    } catch(e) { showToast('恢复失败', 'error'); }
+                };
+                
+                const permanentDelete = async (id) => {
+                    if (!confirm('彻底删除后无法恢复，确定删除？')) return;
+                    try {
+                        await fetch(API + '/trash/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token.value } });
+                        showToast('删除成功');
+                        loadTrash();
+                    } catch(e) { showToast('删除失败', 'error'); }
+                };
+                
+                const emptyTrash = async () => {
+                    if (!confirm('确定清空回收站？')) return;
+                    try {
+                        await fetch(API + '/trash/empty', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token.value } });
+                        showToast('已清空');
+                        loadTrash();
+                    } catch(e) { showToast('清空失败', 'error'); }
                 };
                 
                 const loadAlbums = async () => {
@@ -1403,7 +1477,7 @@
                 
                 return {
                     isLoggedIn, currentPage, currentUser, currentFolderId, loading, searchQuery,
-                    pools, datasets, shares, snapshots, albums, users, files,
+                    pools, datasets, shares, snapshots, trashItems, albums, users, files,
                     loginForm, profileForm, userForm, snapshotForm, newFolderName,
                     showFolderModal, showSnapshotModal, showUserModal, btnLoading,
                     pageTitle, toasts, API,
@@ -1413,7 +1487,8 @@
                     triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum,
                     createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, 
                     selectedFiles, toggleSelect, downloadFile, showRenameDialog, doRename, showMoveDialog, doMove, confirmDelete,
-                    clearSelection, deleteSelected, downloadSelected, showMoveAllDialog, moveFormAll, showMoveAll, doMoveAll
+                    clearSelection, deleteSelected, downloadSelected, showMoveAllDialog, moveFormAll, showMoveAll, doMoveAll,
+                    loadTrash, restoreTrash, permanentDelete, emptyTrash
                 };
             }
         }).mount('#app');
