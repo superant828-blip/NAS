@@ -197,6 +197,24 @@ try:
 except Exception as e:
     print(f"⚠ 插件加载失败，使用传统模式: {e}")
 
+# 静态文件配置
+from fastapi.staticfiles import StaticFiles
+import os
+
+ui_path = ROOT / "ui"
+if ui_path.exists():
+    # 挂载JS目录
+    js_path = ui_path / "js"
+    if js_path.exists():
+        app.mount("/js", StaticFiles(directory=str(js_path)), name="js")
+        print(f"✓ 静态文件目录: {js_path}")
+    
+    # 挂载uploads目录
+    uploads_path = ROOT / "uploads"
+    if uploads_path.exists():
+        app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
+        print(f"✓ 上传目录: {uploads_path}")
+
 # CORS 配置
 app.add_middleware(
     CORSMiddleware,
