@@ -32,6 +32,8 @@ createApp({
         const albums = ref([]);
         const users = ref([]);
         const files = ref([]);
+        const jobs = ref([]);
+        const jobsLoading = ref(false);
         const selectedFiles = ref(new Set());
         const searchQuery = ref('');
         const sortBy = ref('name');
@@ -74,6 +76,119 @@ createApp({
         const currentAlbumId = ref(null);
         const currentAlbumPhotos = ref([]);
         const toasts = ref([]);
+        
+        // ========== 系统监控 ==========
+        const wsConnected = ref(false);
+        const wsConnection = ref(null);
+        const eventLogs = ref([]);
+        const connectedClients = ref(0);
+        const storageWarning = ref(false);
+        
+        // 连接 WebSocket
+        const connectWebSocket = () => {
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = wsProtocol + '//' + location.host + '/ws';
+            
+            try {
+                wsConnection.value = new WebSocket(wsUrl);
+                
+                wsConnection.value.onopen = () => {
+                    wsConnected.value = true;
+                    showToast('WebSocket 已连接', 'success');
+                    // 发送认证
+                    if (token.value) {
+                        wsConnection.value.send(JSON.stringify({ type: 'auth', token: token.value }));
+                    }
+                };
+                
+                wsConnection.value.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'client_count') {
+                            connectedClients.value = data.count || 0;
+                        } else if (data.type === 'event') {
+                            // 添加新事件到日志
+                            eventLogs.value.unshift({
+                                id: Date.now(),
+                                time: new Date().toLocaleString('zh-CN'),
+                                type: data.event_type || 'info',
+                                description: data.message || '',
+                                status: data.status || 'success'
+                            });
+                            // 保持最多100条
+                            if (eventLogs.value.length > 100) {
+                                eventLogs.value = eventLogs.value.slice(0, 100);
+                            }
+                            // 显示通知
+                            showToast('新事件: ' + (data.message || ''), 'info');
+                        } else if (data.type === 'storage_warning') {
+                            storageWarning.value = data.warning || false;
+                        }
+                    } catch(e) {
+                        console.error('WS消息解析失败:', e);
+                    }
+                };
+                
+                wsConnection.value.onclose = () => {
+                    wsConnected.value = false;
+                    connectedClients.value = 0;
+                    showToast('WebSocket 已断开', 'info');
+                };
+                
+                wsConnection.value.onerror = (error) => {
+                    console.error('WebSocket 错误:', error);
+                    showToast('WebSocket 连接错误', 'error');
+                };
+            } catch(e) {
+                console.error('WebSocket 连接失败:', e);
+                showToast('WebSocket 连接失败', 'error');
+            }
+        };
+        
+        // 断开 WebSocket
+        const disconnectWebSocket = () => {
+            if (wsConnection.value) {
+                wsConnection.value.close();
+                wsConnection.value = null;
+            }
+            wsConnected.value = false;
+            connectedClients.value = 0;
+            showToast('WebSocket 已断开', 'info');
+        };
+        
+        // 加载事件日志 (从API)
+        const loadEventLogs = async () => {
+            try {
+                const res = await fetch(API_BASE + '/events', {
+                    headers: { 'Authorization': 'Bearer ' + token.value }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    eventLogs.value = Array.isArray(data) ? data : [];
+                }
+            } catch(e) {
+                console.error('加载事件日志失败:', e);
+            }
+            
+            // 同时检查存储使用率告警
+            try {
+                const res = await fetch(API_BASE + '/storage/pools', {
+                    headers: { 'Authorization': 'Bearer ' + token.value }
+                });
+                if (res.ok) {
+                    const pools = await res.json();
+                    storageWarning.value = false;
+                    for (const pool of pools) {
+                        if (pool.usage_percent > 80) {
+                            storageWarning.value = true;
+                            break;
+                        }
+                    }
+                }
+            } catch(e) {
+                console.error('检查存储告警失败:', e);
+            }
+        };
         
         // ========== 工具函数 ==========
         
@@ -165,6 +280,8 @@ createApp({
             else if (page === 'trash') loadTrash();
             else if (page === 'albums') loadAlbums();
             else if (page === 'users') loadUsers();
+            else if (page === 'jobs') loadJobs();
+            else if (page === 'monitor') loadEventLogs();
         });
         
         // ========== 核心功能 ==========
@@ -196,12 +313,15 @@ createApp({
                 profileForm.value.username = data.user.username;
                 isLoggedIn.value = true;
                 loadData();
+                // 自动连接 WebSocket
+                connectWebSocket();
             } else {
                 alert('登录失败');
             }
         };
         
         const logout = () => {
+            disconnectWebSocket();
             token.value = '';
             localStorage.removeItem('token');
             isLoggedIn.value = false;
@@ -1028,6 +1148,93 @@ createApp({
             }
         };
         
+        // ========== 任务管理 ==========
+        
+        let jobsRefreshInterval = null;
+        
+        const loadJobs = async () => {
+            jobsLoading.value = true;
+            try {
+                const res = await fetch(API_BASE + '/jobs', {
+                    headers: { 'Authorization': 'Bearer ' + token.value }
+                });
+                if (!res.ok) {
+                    jobs.value = [];
+                    jobsLoading.value = false;
+                    return;
+                }
+                const data = await res.json();
+                jobs.value = Array.isArray(data) ? data : [];
+            } catch(e) { 
+                console.error(e); 
+                jobs.value = [];
+            }
+            jobsLoading.value = false;
+            
+            // 设置定时刷新 (每5秒刷新一次正在运行的任务)
+            if (jobsRefreshInterval) clearInterval(jobsRefreshInterval);
+            jobsRefreshInterval = setInterval(() => {
+                const hasRunning = jobs.value.some(j => j.status === 'RUNNING');
+                if (hasRunning && currentPage.value === 'jobs') {
+                    loadJobs();
+                }
+            }, 5000);
+        };
+        
+        const cancelJob = async (jobId) => {
+            if (!confirm('确定要取消这个任务吗？')) return;
+            try {
+                const res = await fetch(API_BASE + '/jobs/' + jobId + '/cancel', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token.value }
+                });
+                if (res.ok) {
+                    showToast('任务已取消', 'success');
+                    loadJobs();
+                } else {
+                    showToast('取消失败', 'error');
+                }
+            } catch(e) {
+                showToast('取消失败', 'error');
+            }
+        };
+        
+        const getJobTypeIcon = (type) => {
+            if (!type) return 'bi bi-question-circle';
+            const t = type.toLowerCase();
+            if (t.includes('upload')) return 'bi bi-cloud-upload';
+            if (t.includes('download')) return 'bi bi-cloud-download';
+            if (t.includes('backup')) return 'bi bi-save';
+            if (t.includes('restore')) return 'bi bi-arrow-counterclockwise';
+            if (t.includes('scrub')) return 'bi bi-arrow-repeat';
+            if (t.includes('delete')) return 'bi bi-trash';
+            return 'bi bi-gear';
+        };
+        
+        const getJobStatusClass = (status) => {
+            if (!status) return 'bg-secondary';
+            switch(status) {
+                case 'PENDING': return 'bg-warning';
+                case 'RUNNING': return 'bg-primary';
+                case 'SUCCESS': return 'bg-success';
+                case 'FAILED': return 'bg-danger';
+                case 'CANCELLED': return 'bg-secondary';
+                default: return 'bg-secondary';
+            }
+        };
+        
+        const getJobStatusText = (status) => {
+            if (!status) return '未知';
+            switch(status) {
+                case 'PENDING': return '等待中';
+                case 'RUNNING': return '运行中';
+                case 'SUCCESS': return '完成';
+                case 'FAILED': return '失败';
+                case 'CANCELLED': return '已取消';
+                default: return status;
+            }
+        };
+        
         // ========== 用户管理 ==========
         
         const loadUsers = async () => {
@@ -1136,7 +1343,7 @@ createApp({
             
             // 数据
             pools, shares, shareLinks, snapshots, trashItems, users, files, selectedFiles, 
-            searchQuery, systemStatus,
+            jobs, jobsLoading, searchQuery, systemStatus,
             
             // 表单
             loginForm, profileForm, poolForm, shareForm, snapshotForm, userForm, 
@@ -1182,11 +1389,18 @@ createApp({
             // 用户
             loadUsers, createUser, deleteUser, updateProfile, changePassword,
             
+            // 任务
+            loadJobs, cancelJob, getJobTypeIcon, getJobStatusClass, getJobStatusText,
+            
             // 文件操作
             loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, 
             formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles, sortFiles,
             handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, 
-            renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected
+            renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected,
+            
+            // 系统监控
+            wsConnected, wsConnection, eventLogs, connectedClients, storageWarning,
+            connectWebSocket, disconnectWebSocket, loadEventLogs
         };
     }
 }).mount('#app');

@@ -1111,6 +1111,10 @@
                         <i class="bi bi-speedometer2"></i>
                         <span>仪表盘</span>
                     </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'monitor' }" @click="navigateTo('monitor')">
+                        <i class="bi bi-graph-up"></i>
+                        <span>监控</span>
+                    </div>
                     <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="navigateTo('files')">
                         <i class="bi bi-folder-fill"></i>
                         <span>文件管理</span>
@@ -1134,6 +1138,10 @@
                     <div class="nav-item" :class="{ active: currentPage === 'trash' }" @click="navigateTo('trash')">
                         <i class="bi bi-trash-fill"></i>
                         <span>回收站</span>
+                    </div>
+                    <div class="nav-item" :class="{ active: currentPage === 'jobs' }" @click="navigateTo('jobs')">
+                        <i class="bi bi-list-task"></i>
+                        <span>任务</span>
                     </div>
                     <div class="nav-item" :class="{ active: currentPage === 'users' }" v-if="currentUser.role === 'admin'" @click="navigateTo('users')">
                         <i class="bi bi-people-fill"></i>
@@ -1257,6 +1265,105 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统监控 -->
+                    <div v-show="currentPage === 'monitor'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-graph-up"></i>系统监控</h4>
+                        </div>
+                        
+                        <div class="card-grid mb-4">
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-broadcast"></i>WebSocket 状态</div>
+                                </div>
+                                <div class="card-value" :style="{ color: wsConnected ? 'var(--success)' : 'var(--danger)' }">
+                                    <i :class="wsConnected ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'"></i>
+                                    {{ wsConnected ? '已连接' : '未连接' }}
+                                </div>
+                                <div class="card-subtitle">实时通信状态</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-people"></i>连接客户端</div>
+                                </div>
+                                <div class="card-value">{{ connectedClients }}</div>
+                                <div class="card-subtitle">当前在线</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-exclamation-triangle"></i>存储告警</div>
+                                </div>
+                                <div class="card-value" :style="{ color: storageWarning ? 'var(--warning)' : 'var(--success)' }">
+                                    {{ storageWarning ? '警告' : '正常' }}
+                                </div>
+                                <div class="card-subtitle">{{ storageWarning ? '存储使用率超过80%' : '存储使用正常' }}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="card-header">
+                                    <div class="card-title"><i class="bi bi-clock-history"></i>事件日志</div>
+                                </div>
+                                <div class="card-value">{{ eventLogs.length }}</div>
+                                <div class="card-subtitle">最近事件</div>
+                            </div>
+                        </div>
+                        
+                        <div class="toolbar mb-3">
+                            <button v-if="!wsConnected" class="toolbar-btn toolbar-btn-primary" @click="connectWebSocket">
+                                <i class="bi bi-plug"></i> 连接 WebSocket
+                            </button>
+                            <button v-else class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="disconnectWebSocket">
+                                <i class="bi bi-plug-fill"></i> 断开连接
+                            </button>
+                            <button class="toolbar-btn" @click="loadEventLogs">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新日志
+                            </button>
+                        </div>
+                        
+                        <div class="alert-warning" v-if="storageWarning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            存储使用率已超过 80%，请及时清理空间或扩容！
+                        </div>
+                        
+                        <div class="page-header">
+                            <h5 class="page-title"><i class="bi bi-journal-text"></i>最近事件</h5>
+                        </div>
+                        <div v-if="!eventLogs.length" class="empty-state">
+                            <i class="bi bi-journal"></i>
+                            <h5>暂无事件记录</h5>
+                            <p>连接 WebSocket 后将自动接收事件</p>
+                        </div>
+                        <div v-else class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr><th>时间</th><th>类型</th><th>描述</th><th>状态</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="log in eventLogs" :key="log.id">
+                                        <td>{{ log.time }}</td>
+                                        <td>
+                                            <span class="badge" :style="{
+                                                background: log.type === 'upload' ? 'var(--primary)' : 
+                                                           log.type === 'delete' ? 'var(--danger)' : 
+                                                           log.type === 'task' ? 'var(--success)' : 'var(--warning)',
+                                                color: '#fff'
+                                            }">
+                                                {{ log.type === 'upload' ? '上传' : 
+                                                   log.type === 'delete' ? '删除' : 
+                                                   log.type === 'task' ? '任务' : '其他' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ log.description }}</td>
+                                        <td>
+                                            <span class="badge" :style="{ background: log.status === 'success' ? 'var(--success)' : 'var(--warning)', color: '#000' }">
+                                                {{ log.status === 'success' ? '成功' : '进行中' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     
@@ -1556,6 +1663,71 @@
                                             <button class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="permanentDelete(item.id)">
                                                 <i class="bi bi-x-circle"></i> 彻底删除
                                             </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- 任务管理 -->
+                    <div v-show="currentPage === 'jobs'" class="page">
+                        <div class="page-header">
+                            <h4 class="page-title"><i class="bi bi-list-task"></i>任务管理</h4>
+                        </div>
+                        <div class="toolbar">
+                            <button class="toolbar-btn" @click="loadJobs">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+                        
+                        <div v-if="jobsLoading" class="loading"><div class="spinner"></div></div>
+                        <div v-else-if="!(jobs && jobs.length)" class="empty-state">
+                            <i class="bi bi-list-task"></i>
+                            <h5>暂无任务</h5>
+                            <p>正在执行的任务会在这里显示</p>
+                        </div>
+                        <div v-else class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>任务ID</th>
+                                        <th>任务名称</th>
+                                        <th>状态</th>
+                                        <th>进度</th>
+                                        <th>创建时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="job in jobs" :key="job.id">
+                                        <td>{{ job.id }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i :class="getJobTypeIcon(job.type)" style="font-size:20px"></i>
+                                                <span>{{ job.name || job.type }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge" :class="getJobStatusClass(job.status)">
+                                                {{ getJobStatusText(job.status) }}
+                                            </span>
+                                        </td>
+                                        <td style="min-width:150px">
+                                            <div class="progress" v-if="job.status === 'RUNNING'">
+                                                <div class="progress-bar" :style="{ width: (job.progress || 0) + '%' }"></div>
+                                            </div>
+                                            <span v-else class="text-muted">{{ job.progress || 0 }}%</span>
+                                        </td>
+                                        <td>{{ formatDate(job.created_at) }}</td>
+                                        <td>
+                                            <button v-if="job.status === 'RUNNING'" 
+                                                    class="toolbar-btn" 
+                                                    style="background:var(--danger);border-color:var(--danger);color:white"
+                                                    @click="cancelJob(job.id)">
+                                                <i class="bi bi-x-circle"></i> 取消
+                                            </button>
+                                            <span v-else class="text-muted">-</span>
                                         </td>
                                     </tr>
                                 </tbody>
