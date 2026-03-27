@@ -108,6 +108,37 @@
             padding: 8px;
         }
         
+        /* 批量操作工具栏 */
+        .batch-toolbar {
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 90;
+        }
+        
+        .batch-info {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .batch-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .batch-actions .toolbar-btn {
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+        
         /* 底部导航 */
         .bottom-nav {
             position: fixed;
@@ -531,20 +562,31 @@
                                 <div class="file-name">{{ f.name }}</div>
                                 <div class="file-size">{{ f.is_folder ? '文件夹' : formatSize(f.size) }}</div>
                             </div>
-                            <div class="file-actions">
-                                <button v-if="!f.is_folder" @click.stop="downloadFile(f)" title="下载">
-                                    <i class="bi bi-download"></i>
-                                </button>
-                                <button @click.stop="showRenameDialog(f)" title="重命名">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button @click.stop="showMoveDialog(f)" title="移动">
-                                    <i class="bi bi-folder-fill"></i>
-                                </button>
-                                <button @click.stop="confirmDelete(f)" title="删除" style="color:var(--danger)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 批量操作工具栏 -->
+                    <div v-if="selectedFiles.size > 0" class="batch-toolbar">
+                        <div class="batch-info">
+                            <i class="bi bi-check-circle-fill"></i>
+                            已选择 <strong>{{ selectedFiles.size }}</strong> 项
+                        </div>
+                        <div class="batch-actions">
+                            <button class="toolbar-btn" @click="downloadSelected" v-if="selectedFiles.size === 1">
+                                <i class="bi bi-download"></i> 下载
+                            </button>
+                            <button class="toolbar-btn" @click="showMoveAllDialog">
+                                <i class="bi bi-folder-fill"></i> 移动
+                            </button>
+                            <button class="toolbar-btn" @click="showRenameDialog(files.find(f => selectedFiles.has(f.id)))" v-if="selectedFiles.size === 1">
+                                <i class="bi bi-pencil"></i> 重命名
+                            </button>
+                            <button class="toolbar-btn" style="background:var(--danger);color:white" @click="deleteSelected">
+                                <i class="bi bi-trash"></i> 删除
+                            </button>
+                            <button class="toolbar-btn" @click="clearSelection">
+                                <i class="bi bi-x"></i> 取消
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -813,6 +855,32 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" @click="showMove = false">取消</button>
                         <button type="button" class="btn btn-primary" @click="doMove">移动</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 批量移动弹窗 -->
+        <div v-if="showMoveAll" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">移动选中项到</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="showMoveAll = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" :value="null" v-model="moveFormAll.targetFolderId" id="rootFolderAll">
+                            <label class="form-check-label" for="rootFolderAll">根目录</label>
+                        </div>
+                        <div v-for="folder in moveFormAll.folders" :key="folder.id" class="form-check mb-2">
+                            <input class="form-check-input" type="radio" :value="folder.id" v-model="moveFormAll.targetFolderId" :id="'folderAll'+folder.id">
+                            <label class="form-check-label" :for="'folderAll'+folder.id">{{ folder.full_path || folder.name }}</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showMoveAll = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="doMoveAll">移动</button>
                     </div>
                 </div>
             </div>
@@ -1101,6 +1169,65 @@
                     } catch(e) { showToast('删除失败', 'error'); }
                 };
                 
+                // 批量操作
+                const clearSelection = () => {
+                    selectedFiles.value = new Set();
+                };
+                
+                const deleteSelected = async () => {
+                    if (!confirm('确定要删除选中的 ' + selectedFiles.value.size + ' 项吗？')) return;
+                    let success = 0, fail = 0;
+                    for (let id of selectedFiles.value) {
+                        try {
+                            await fetch(API + '/files/' + id, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': 'Bearer ' + token.value }
+                            });
+                            success++;
+                        } catch(e) { fail++; }
+                    }
+                    showToast('删除完成: 成功 ' + success + ' 项, 失败 ' + fail + ' 项');
+                    clearSelection();
+                    loadFiles();
+                };
+                
+                const downloadSelected = () => {
+                    const arr = Array.from(selectedFiles.value);
+                    if (arr.length === 1) {
+                        const f = files.value.find(file => file.id === arr[0]);
+                        if (f && !f.is_folder) downloadFile(f);
+                    }
+                };
+                
+                const moveFormAll = ref({ targetFolderId: null, folders: [] });
+                const showMoveAll = ref(false);
+                
+                const showMoveAllDialog = async () => {
+                    try {
+                        const res = await fetch(API + '/folders', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) moveFormAll.value.folders = await res.json();
+                    } catch(e) {}
+                    showMoveAll.value = true;
+                };
+                
+                const doMoveAll = async () => {
+                    let success = 0, fail = 0;
+                    for (let id of selectedFiles.value) {
+                        try {
+                            await fetch(API + '/files/' + id + '/move', {
+                                method: 'PUT',
+                                headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ parent_id: moveFormAll.value.targetFolderId })
+                            });
+                            success++;
+                        } catch(e) { fail++; }
+                    }
+                    showToast('移动完成: 成功 ' + success + ' 项, 失败 ' + fail + ' 项');
+                    showMoveAll.value = false;
+                    clearSelection();
+                    loadFiles();
+                };
+                
                 const toggleSelect = (id) => {
                     if (selectedFiles.value.has(id)) {
                         selectedFiles.value.delete(id);
@@ -1285,7 +1412,8 @@
                     getFileIcon, formatSize, handleFileClick, goParent, createFolder, triggerUpload, handleUpload,
                     triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum,
                     createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, 
-                    selectedFiles, toggleSelect, downloadFile, showRenameDialog, doRename, showMoveDialog, doMove, confirmDelete
+                    selectedFiles, toggleSelect, downloadFile, showRenameDialog, doRename, showMoveDialog, doMove, confirmDelete,
+                    clearSelection, deleteSelected, downloadSelected, showMoveAllDialog, moveFormAll, showMoveAll, doMoveAll
                 };
             }
         }).mount('#app');
