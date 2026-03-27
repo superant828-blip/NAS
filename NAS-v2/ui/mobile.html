@@ -642,27 +642,27 @@
                     </div>
                 </div>
                 
-                <!-- 快照 -->
+                <!-- 分享链接 -->
                 <div v-show="currentPage === 'shares'">
                     <div class="toolbar">
                         <button class="toolbar-btn toolbar-btn-primary" @click="showSnapshotModal = true; loadDatasets()">
-                            <i class="bi bi-plus-circle"></i> 创建快照
+                            <i class="bi bi-plus-circle"></i> 创建分享链接
                         </button>
                     </div>
                     
                     <div v-if="loading" class="loading"><div class="spinner"></div></div>
                     <div v-else-if="!shares.smb.length + shares.nfs.length" class="empty-state">
                         <i class="bi bi-camera"></i>
-                        <p>暂无快照</p>
+                        <p>暂无分享链接</p>
                     </div>
                     <div v-else>
-                        <div v-for="snap in snapshots" :key="snap.name" class="card">
+                        <div v-for="snap in shareLinks" :key="share.name" class="card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <i class="bi bi-camera text-warning"></i>
-                                    <span class="ms-2">{{ snap.name }}</span>
+                                    <span class="ms-2">{{ share.name }}</span>
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger" @click="deleteSnapshot(snap.name)">
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteSnapshot(share.name)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -811,12 +811,12 @@
             </div>
         </div>
         
-        <!-- 新建快照弹窗 -->
+        <!-- 新建分享链接弹窗 -->
         <div v-if="showSnapshotModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">创建快照</h5>
+                        <h5 class="modal-title">创建分享链接</h5>
                         <button type="button" class="btn-close btn-close-white" @click="showSnapshotModal = false"></button>
                     </div>
                     <div class="modal-body">
@@ -828,7 +828,7 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">快照名称</label>
+                            <label class="form-label">分享链接名称</label>
                             <input type="text" class="form-control" v-model="shareForm.name" placeholder="如: backup-20240327">
                         </div>
                     </div>
@@ -976,7 +976,7 @@
                 const pools = ref([]);
                 const datasets = ref([]);
                 const shares = ref({ smb: [], nfs: [] });
-                const snapshots = ref([]);
+                const shareLinks = ref([]);
                 const trashItems = ref([]);
                 const albums = ref([]);
                 const users = ref([]);
@@ -995,7 +995,7 @@
                 const btnLoading = ref({});
                 
                 const pageTitle = computed(() => {
-                    const titles = { dashboard: '首页', files: '文件管理', albums: '相册', snapshots: '快照', profile: '个人设置' };
+                    const titles = { dashboard: '首页', files: '文件管理', albums: '相册', shareLinks: '分享链接', profile: '个人设置' };
                     return titles[currentPage.value] || 'NAS';
                 });
                 
@@ -1030,7 +1030,7 @@
                     if (page === 'dashboard') loadPools();
                     else if (page === 'files') loadFiles();
                     else if (page === 'albums') loadAlbums();
-                    else if (page === 'shares') loadSnapshots();
+                    else if (page === 'shares') loadShareLinks();
                     else if (page === 'trash') loadTrash();
                     else if (page === 'users') loadUsers();
                 });
@@ -1038,7 +1038,7 @@
                 const loadData = () => {
                     loadPools();
                     loadShares();
-                    loadSnapshots();
+                    loadShareLinks();
                     loadTrash();
                     loadAlbums();
                     loadUsers();
@@ -1097,10 +1097,10 @@
                     } catch(e) { console.error(e); }
                 };
                 
-                const loadSnapshots = async () => {
+                const loadShareLinks = async () => {
                     try {
-                        const res = await fetch(API + '/snapshots', { headers: { 'Authorization': 'Bearer ' + token.value } });
-                        if (res.ok) snapshots.value = await res.json();
+                        const res = await fetch(API + '/shareLinks', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) shareLinks.value = await res.json();
                     } catch(e) { console.error(e); }
                 };
                 
@@ -1512,31 +1512,31 @@
                     event.target.nextElementSibling.style.display = 'block';
                 };
                 
-                // 快照
+                // 分享链接
                 const createSnapshot = async () => {
                     if (!shareForm.value.dataset || !shareForm.value.name) {
                         showToast('请填写完整', 'error'); return;
                     }
                     try {
-                        await fetch(API + '/snapshots?dataset=' + shareForm.value.dataset + '&name=' + shareForm.value.name, {
+                        await fetch(API + '/shareLinks?dataset=' + shareForm.value.dataset + '&name=' + shareForm.value.name, {
                             method: 'POST',
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
                         showToast('创建成功');
                         showSnapshotModal.value = false;
                         shareForm.value = { dataset: '', name: '' };
-                        loadSnapshots();
+                        loadShareLinks();
                     } catch(e) { showToast('创建失败', 'error'); }
                 };
                 
                 const deleteSnapshot = async (name) => {
                     if (!confirm('确定删除?')) return;
                     try {
-                        await fetch(API + '/snapshots/' + name, {
+                        await fetch(API + '/shareLinks/' + name, {
                             method: 'DELETE',
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
-                        loadSnapshots();
+                        loadShareLinks();
                     } catch(e) { showToast('删除失败', 'error'); }
                 };
                 
@@ -1588,7 +1588,7 @@
                 
                 return {
                     isLoggedIn, currentPage, currentUser, currentFolderId, loading, searchQuery,
-                    pools, datasets, shares, snapshots, trashItems, albums, users, files,
+                    pools, datasets, shares, shareLinks, trashItems, albums, users, files,
                     loginForm, profileForm, userForm, shareForm, newFolderName,
                     showFolderModal, showSnapshotModal, showUserModal, btnLoading,
                     pageTitle, toasts, API,
