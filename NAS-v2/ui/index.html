@@ -1282,6 +1282,9 @@
                             <button class="toolbar-btn" v-if="selectedFiles.size > 0" @click="showShareModal = true">
                                 <i class="bi bi-share"></i> 分享选中
                             </button>
+                            <button class="toolbar-btn" @click="goParent" v-if="currentFolderId">
+                                <i class="bi bi-arrow-up"></i> 返回上级
+                            </button>
                             <button class="toolbar-btn" @click="goHome" v-if="currentFolderId">
                                 <i class="bi bi-arrow-return-left"></i> 返回根目录
                             </button>
@@ -2267,6 +2270,25 @@ console.log("NAS App Loading...");
                     return new Date(dateStr).toLocaleString('zh-CN');
                 };
                 
+                // 返回上一级
+                const goParent = async () => {
+                    if (!currentFolderId.value) return;
+                    try {
+                        const res = await fetch(API + "/files/" + currentFolderId.value, {
+                            headers: { "Authorization": "Bearer " + token.value }
+                        });
+                        if (res.ok) {
+                            const file = await res.json();
+                            if (file.parent_id) {
+                                currentFolderId.value = file.parent_id;
+                                loadFiles();
+                            } else {
+                                goHome();
+                            }
+                        }
+                    } catch(e) { console.error(e); }
+                };
+
                 const goHome = () => {
                     currentFolderId.value = null;
                     currentFolderName.value = '';
@@ -3059,7 +3081,7 @@ console.log("NAS App Loading...");
                     loadTrash, restoreTrash, permanentDelete, emptyTrash,
                     loadAlbums, handlePhotoUpload, createAlbum, viewAlbum, currentAlbumId, currentAlbumPhotos,
                     loadUsers, createUser, deleteUser, updateProfile, changePassword,
-                    loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, formatSize, formatDate, goHome, refreshFiles, searchFiles,
+                    loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles,
                     handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, renameFile, prepareRename,
                     loadFolders, showMoveDialog, moveSelected, currentAlbumId, currentAlbumPhotos
                 };
