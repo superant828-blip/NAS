@@ -632,8 +632,9 @@ async def create_folder(
             )
             parent = cursor.fetchone()
             if parent:
-                depth = parent['depth'] + 1
-                parent_path = parent.get('full_path', '') or ''
+                parent_dict = dict(parent)
+                depth = parent_dict['depth'] + 1
+                parent_path = parent_dict.get('full_path', '') or ''
         
         full_path = f"{parent_path}/{folder.name}" if parent_path else f"/{folder.name}"
         
