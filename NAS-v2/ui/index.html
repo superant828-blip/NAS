@@ -1218,7 +1218,7 @@
                             <h5 class="page-title"><i class="bi bi-hdd"></i>存储池状态</h4>
                         </div>
                         <div v-if="loading" class="loading"><div class="spinner"></div></div>
-                        <div v-else-if="!pools.length" class="empty-state">
+                        <div v-else-if="!(pools && pools.length)" class="empty-state">
                             <i class="bi bi-database"></i>
                             <h5>暂无存储池</h5>
                             <p>请创建 ZFS 池开始使用</p>
@@ -1302,7 +1302,7 @@
                             </div>
                         </div>
                         <div v-if="loading" class="loading"><div class="spinner"></div></div>
-                        <div v-else-if="!files.length" class="empty-state">
+                        <div v-else-if="!(files && files.length)" class="empty-state">
                             <i class="bi bi-folder2-open"></i>
                             <h5>文件夹为空</h5>
                             <p>上传文件或创建文件夹开始使用</p>
@@ -1350,7 +1350,7 @@
                         <div class="page-header">
                             <h5>SMB/CIFS 共享</h5>
                         </div>
-                        <div v-if="!shares.smb || !shares.smb.length" class="empty-state" style="padding:30px">
+                        <div v-if="!shares.smb || !(shares && shares.smb && shares.smb.length)" class="empty-state" style="padding:30px">
                             <i class="bi bi-folder-x"></i>
                             <h5>暂无 SMB 共享</h5>
                         </div>
@@ -1375,7 +1375,7 @@
                         <div class="page-header mt-4">
                             <h5>NFS 共享</h5>
                         </div>
-                        <div v-if="!shares.nfs || !shares.nfs.length" class="empty-state" style="padding:30px">
+                        <div v-if="!shares.nfs || !(shares && shares.nfs && shares.nfs.length)" class="empty-state" style="padding:30px">
                             <i class="bi bi-folder-x"></i>
                             <h5>暂无 NFS 共享</h5>
                         </div>
@@ -1418,7 +1418,7 @@
                         </div>
                         
                         <div v-if="loading" class="loading"><div class="spinner"></div></div>
-                        <div v-else-if="!shareLinks.length" class="empty-state">
+                        <div v-else-if="!(shareLinks && shareLinks.length)" class="empty-state">
                             <i class="bi bi-link-45deg"></i>
                             <h5>暂无分享链接</h5>
                             <p>创建分享链接来分享文件</p>
@@ -1478,7 +1478,7 @@
                         </div>
                         
                         <div v-if="loading" class="loading"><div class="spinner"></div></div>
-                        <div v-else-if="!snapshots.length" class="empty-state">
+                        <div v-else-if="!(snapshots && snapshots.length)" class="empty-state">
                             <i class="bi bi-camera"></i>
                             <h5>暂无快照</h5>
                         </div>
@@ -1520,7 +1520,7 @@
                         </div>
                         
                         <div v-if="loading" class="loading"><div class="spinner"></div></div>
-                        <div v-else-if="!trashItems.length" class="empty-state">
+                        <div v-else-if="!(trashItems && trashItems.length)" class="empty-state">
                             <i class="bi bi-trash"></i>
                             <h5>回收站为空</h5>
                             <p>删除的文件会在这里显示</p>
@@ -1572,7 +1572,7 @@
                         </div>
                         
                         <div v-if="loading" class="loading"><div class="spinner"></div></div>
-                        <div v-else-if="!albums.length" class="empty-state">
+                        <div v-else-if="!(albums && albums.length)" class="empty-state">
                             <i class="bi bi-images"></i>
                             <h5>暂无相册</h5>
                             <p>创建相册并上传照片</p>
@@ -2051,7 +2051,7 @@
             setup() {
                 const API = 'http://' + location.host + '/api/v1';
                 const token = ref(localStorage.getItem('token') || '');
-                const isLoggedIn = ref(!!token.value);
+                const isLoggedIn = ref(false);
                 const currentUser = ref({ username: '', email: '', role: 'user' });
                 const currentPage = ref('dashboard');
                 const currentFolderId = ref(null);
@@ -2471,7 +2471,7 @@
                         }
                         const data = await res.json();
                         shareLinks.value = Array.isArray(data) ? data : [];
-                        systemStatus.value.links = shareLinks.value.length;
+                        systemStatus.value.links = (shareLinks && shareLinks.length) || 0;
                     } catch(e) { 
                         console.error(e); 
                         shareLinks.value = [];
@@ -2607,7 +2607,7 @@
                 };
                 
                 const emptyTrash = async () => {
-                    if (trashItems.value.length === 0) {
+                    if ((trashItems && trashItems.length) || 0 === 0) {
                         showToast('回收站已经是空的', 'info');
                         return;
                     }
@@ -2640,7 +2640,7 @@
                         }
                         const data = await res.json();
                         pools.value = Array.isArray(data) ? data : [];
-                        systemStatus.value.pools = pools.value ? pools.value.length : 0;
+                        systemStatus.value.pools = pools.value ? (pools && pools.length) || 0 : 0;
                     } catch(e) { 
                         console.error(e); 
                         pools.value = [];
@@ -2801,7 +2801,7 @@
                         }
                         const data = await res.json();
                         snapshots.value = Array.isArray(data) ? data : [];
-                        systemStatus.value.snapshots = snapshots.value.length;
+                        systemStatus.value.snapshots = (snapshots && snapshots.length) || 0;
                     } catch(e) { 
                         console.error(e); 
                         snapshots.value = [];
@@ -2970,7 +2970,7 @@
                         }
                         const data = await res.json();
                         users.value = Array.isArray(data) ? data : [];
-                        systemStatus.value.users = users.value.length;
+                        systemStatus.value.users = (users.value && users.value.length) || 0;
                     } catch(e) { 
                         console.error(e); 
                         users.value = [];
