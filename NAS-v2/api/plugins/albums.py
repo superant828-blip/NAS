@@ -45,11 +45,13 @@ class AlbumCreate(BaseModel):
 
 # ==================== 依赖注入 ====================
 
-def get_current_user(authorization: str = None) -> User:
+def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     """获取当前用户 - 从Header获取"""
     from fastapi import Header
     authorization = Header(None)
     if not authorization or not authorization.startswith("Bearer "):
+        authorization = authorization or None
+            authorization = str(authorization) if authorization else None
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     token = authorization[7:]
