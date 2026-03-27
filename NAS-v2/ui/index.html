@@ -1573,7 +1573,7 @@
                             <button class="toolbar-btn toolbar-btn-primary" onclick="document.getElementById('photoUpload').click()">
                                 <i class="bi bi-cloud-upload"></i> 上传照片
                             </button>
-                            <button class="toolbar-btn" onclick="createAlbum()">
+                            <button class="toolbar-btn" @click="createAlbum">
                                 <i class="bi bi-folder-plus"></i> 新建相册
                             </button>
                             <button class="toolbar-btn" @click="loadAlbums">
@@ -1587,13 +1587,13 @@
                             <h5>暂无相册</h5>
                             <p>创建相册并上传照片</p>
                             <div class="empty-action">
-                                <button class="toolbar-btn toolbar-btn-primary" onclick="createAlbum()">
+                                <button class="toolbar-btn toolbar-btn-primary" @click="createAlbum">
                                     <i class="bi bi-folder-plus"></i> 新建相册
                                 </button>
                             </div>
                         </div>
                         <div v-else class="card-grid">
-                            <div v-for="album in albums" :key="album.id" class="info-card" onclick="viewAlbum(album.id)">
+                            <div v-for="album in albums" :key="album.id" class="info-card" @click="viewAlbum(album.id)">
                                 <div class="card-header">
                                     <div class="card-title"><i class="bi bi-folder-fill"></i> {{ album.name }}</div>
                                 </div>
