@@ -20,6 +20,7 @@ from pydantic import constr
 from security.auth import auth_manager, User
 from core.security import InputValidator, SQLSanitizer
 from core.cache import cached, invalidate_cache
+from api.core.job import job_service, JobState
 
 # ==================== 上传配置 ====================
 
@@ -811,3 +812,176 @@ async def permanent_delete_trash(trash_id: int, current_user: User = Depends(get
         return {"message": "File permanently deleted"}
     finally:
         conn.close()
+
+
+# ==================== 批量操作（Job 支持）====================
+
+class BatchDeleteRequest(BaseModel):
+    file_ids: List[int]
+
+
+class BatchMoveRequest(BaseModel):
+    file_ids: List[int]
+    target_parent_id: int
+
+
+@router.post("/files/batch-delete")
+async def batch_delete_files(
+    request: BatchDeleteRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    批量删除文件（使用 Job）
+    返回任务 ID，可以通过 /api/v1/jobs/{job_id} 查询状态
+    """
+    if not request.file_ids:
+        raise HTTPException(status_code=400, detail="No files specified")
+    
+    # 创建任务
+    job = job_service.create_job(
+        description=f"Batch delete {len(request.file_ids)} files"
+    )
+    job_id = job.id
+    
+    # 异步执行
+    def _batch_delete():
+        conn = get_file_db()
+        try:
+            job_service.set_running(job_id)
+            total = len(request.file_ids)
+            deleted_count = 0
+            
+            for i, file_id in enumerate(request.file_ids):
+                cursor = conn.execute(
+                    "SELECT * FROM files WHERE id = ? AND user_id = ?",
+                    (file_id, current_user.id)
+                )
+                file = cursor.fetchone()
+                
+                if file:
+                    # 移动到回收站
+                    conn.execute("""
+                        INSERT INTO trash (user_id, file_type, original_id, original_name, stored_path, size, mime_type)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        current_user.id,
+                        'folder' if file['is_folder'] else 'file',
+                        file['id'],
+                        file['name'],
+                        file['full_path'],
+                        file['size'],
+                        file['mime_type']
+                    ))
+                    conn.execute("UPDATE files SET status = 0 WHERE id = ?", (file_id,))
+                    deleted_count += 1
+                
+                # 更新进度
+                progress = int((i + 1) / total * 100)
+                job_service.update_progress(job_id, progress, JobState.RUNNING)
+            
+            conn.commit()
+            job_service.complete(job_id, {"deleted": deleted_count, "total": total})
+        except Exception as e:
+            job_service.fail(job_id, str(e))
+        finally:
+            conn.close()
+    
+    # 启动异步任务
+    import threading
+    thread = threading.Thread(target=_batch_delete)
+    thread.daemon = True
+    thread.start()
+    
+    return {
+        "job_id": job_id,
+        "message": "Batch delete task started",
+        "total_files": len(request.file_ids)
+    }
+
+
+@router.post("/files/batch-move")
+async def batch_move_files(
+    request: BatchMoveRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    批量移动文件（使用 Job）
+    返回任务 ID，可以通过 /api/v1/jobs/{job_id} 查询状态
+    """
+    if not request.file_ids:
+        raise HTTPException(status_code=400, detail="No files specified")
+    
+    # 验证目标文件夹存在
+    conn = get_file_db()
+    try:
+        cursor = conn.execute(
+            "SELECT * FROM files WHERE id = ? AND user_id = ? AND is_folder = 1",
+            (request.target_parent_id, current_user.id)
+        )
+        target_folder = cursor.fetchone()
+        
+        if not target_folder:
+            raise HTTPException(status_code=404, detail="Target folder not found")
+    finally:
+        conn.close()
+    
+    # 创建任务
+    job = job_service.create_job(
+        description=f"Batch move {len(request.file_ids)} files to folder {request.target_parent_id}"
+    )
+    job_id = job.id
+    
+    # 异步执行
+    def _batch_move():
+        conn = get_file_db()
+        try:
+            job_service.set_running(job_id)
+            total = len(request.file_ids)
+            moved_count = 0
+            
+            for i, file_id in enumerate(request.file_ids):
+                cursor = conn.execute(
+                    "SELECT * FROM files WHERE id = ? AND user_id = ?",
+                    (file_id, current_user.id)
+                )
+                file = cursor.fetchone()
+                
+                if file:
+                    old_path = file['full_path']
+                    old_name = file['name']
+                    
+                    # 构建新路径
+                    new_path = f"{target_folder['full_path']}/{old_name}"
+                    new_depth = target_folder['depth'] + 1
+                    
+                    conn.execute("""
+                        UPDATE files 
+                        SET parent_id = ?, path = ?, full_path = ?, depth = ?, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                    """, (request.target_parent_id, target_folder['path'], new_path, new_depth, file_id))
+                    moved_count += 1
+                
+                # 更新进度
+                progress = int((i + 1) / total * 100)
+                job_service.update_progress(job_id, progress, JobState.RUNNING)
+            
+            conn.commit()
+            invalidate_cache(f"files:{current_user.id}")
+            job_service.complete(job_id, {"moved": moved_count, "total": total})
+        except Exception as e:
+            job_service.fail(job_id, str(e))
+        finally:
+            conn.close()
+    
+    # 启动异步任务
+    import threading
+    thread = threading.Thread(target=_batch_move)
+    thread.daemon = True
+    thread.start()
+    
+    return {
+        "job_id": job_id,
+        "message": "Batch move task started",
+        "total_files": len(request.file_ids),
+        "target_folder_id": request.target_parent_id
+    }
