@@ -1266,7 +1266,7 @@
                             <h4 class="page-title"><i class="bi bi-folder-fill"></i>文件管理</h4>
                         </div>
                         <div class="toolbar">
-                            <input type="file" ref="uploadInput" style="display:none" multiple @change="handleUpload">
+                            <input type="file" id="uploadInput" style="display:none" multiple @change="handleUpload">
                             <button class="toolbar-btn toolbar-btn-primary" :class="{ 'btn-loading': btnLoading.upload }" @click="triggerUpload">
                                 <i class="bi bi-cloud-upload"></i> 上传文件
                             </button>
