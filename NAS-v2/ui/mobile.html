@@ -618,6 +618,30 @@
                     </div>
                 </div>
                 
+                <!-- 相册详情 -->
+                <div v-if="currentAlbumId">
+                    <div class="toolbar">
+                        <button class="toolbar-btn" @click="goBackToAlbums">
+                            <i class="bi bi-arrow-left"></i> 返回
+                        </button>
+                        <button class="toolbar-btn toolbar-btn-primary" @click="triggerPhotoUpload">
+                            <i class="bi bi-cloud-upload"></i> 上传
+                        </button>
+                    </div>
+                    
+                    <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                    <div v-else-if="!currentAlbumPhotos.length" class="empty-state">
+                        <i class="bi bi-images"></i>
+                        <p>相册为空</p>
+                    </div>
+                    <div v-else class="album-grid">
+                        <div v-for="photo in currentAlbumPhotos" :key="photo.id" class="album-item" @click="previewPhoto(photo)">
+                            <img :src="API + '/files/' + photo.id + '/thumbnail?size=200'" style="width:100%;height:100%;object-fit:cover;border-radius:8px" v-if="photo.thumbnail_path || photo.mime_type && photo.mime_type.startsWith('image/')">
+                            <i class="bi bi-image-fill" style="font-size:40px" v-else></i>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- 快照 -->
                 <div v-show="currentPage === 'snapshots'">
                     <div class="toolbar">
@@ -1410,8 +1434,33 @@
                 };
                 
                 const viewAlbum = (id) => {
-                    // TODO: 相册详情
-                    showToast('功能开发中');
+                    currentAlbumId.value = id;
+                    loadAlbumPhotos(id);
+                };
+                
+                const currentAlbumId = ref(null);
+                const currentAlbumPhotos = ref([]);
+                
+                const loadAlbumPhotos = async (albumId) => {
+                    loading.value = true;
+                    try {
+                        const res = await fetch(API + '/albums/' + albumId + '/photos', { 
+                            headers: { 'Authorization': 'Bearer ' + token.value } 
+                        });
+                        if (res.ok) currentAlbumPhotos.value = await res.json();
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                const goBackToAlbums = () => {
+                    currentAlbumId.value = null;
+                    currentAlbumPhotos.value = [];
+                    loadAlbums();
+                };
+                
+                const previewPhoto = (photo) => {
+                    // 在新窗口打开大图
+                    window.open(API + '/files/' + photo.id + '/download', '_blank');
                 };
                 
                 // 快照
@@ -1497,7 +1546,7 @@
                     renameForm, showRename, moveForm, showMove,
                     handleLogin, logout, loadData, loadPools, loadDatasets, loadFiles,
                     getFileIcon, formatSize, handleFileClick, goParent, createFolder, triggerUpload, handleUpload,
-                    triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum,
+                    triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum, currentAlbumId, currentAlbumPhotos, goBackToAlbums, previewPhoto,
                     createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, 
                     selectedFiles, toggleSelect, downloadFile, showRenameDialog, doRename, showMoveDialog, doMove, confirmDelete,
                     clearSelection, deleteSelected, downloadSelected, showMoveAllDialog, moveFormAll, showMoveAll, doMoveAll,
