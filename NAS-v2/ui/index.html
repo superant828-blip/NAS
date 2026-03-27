@@ -3010,6 +3010,12 @@ console.log("NAS App Loading...");
                         alert('请填写完整信息'); return;
                     }
                     
+                    // 验证密码强度
+                    const pwd = userForm.value.password;
+                    if (pwd.length < 8) {
+                        alert('密码至少需要8个字符'); return;
+                    }
+                    
                     const res = await fetch(API + '/users', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
@@ -3020,9 +3026,11 @@ console.log("NAS App Loading...");
                         showUserModal.value = false;
                         userForm.value = { email: '', username: '', password: '', role: 'user' };
                         loadUsers();
-                        alert('创建成功');
+                        showToast('用户创建成功', 'success');
                     } else {
-                        alert('创建失败');
+                        const err = await res.json();
+                        const msg = err.detail || err.message || JSON.stringify(err);
+                        alert('创建失败: ' + msg);
                     }
                 };
                 
