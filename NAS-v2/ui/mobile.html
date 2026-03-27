@@ -821,20 +821,27 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">数据集</label>
-                            <select class="form-select" v-model="shareForm.dataset">
-                                <option value="">请选择</option>
-                                <option v-for="ds in datasets" :key="ds.name" :value="ds.name">{{ ds.name }}</option>
+                            <label class="form-label">选择文件夹</label>
+                            <select class="form-select" v-model="shareForm.folderId" @change="shareForm.fileId=''">
+                                <option value="">请选择文件夹</option>
+                                <option v-for="f in files.filter(f => f.is_folder)" :key="f.id" :value="f.id">{{ f.name }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" v-if="shareForm.folderId">
+                            <label class="form-label">选择文件</label>
+                            <select class="form-select" v-model="shareForm.fileId">
+                                <option value="">请选择文件</option>
+                                <option v-for="f in files.filter(f => !f.is_folder && f.parent_id == shareForm.folderId)" :key="f.id" :value="f.id">{{ f.name }}</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">分享链接名称</label>
-                            <input type="text" class="form-control" v-model="shareForm.name" placeholder="如: backup-20240327">
+                            <input type="text" class="form-control" v-model="shareForm.name" placeholder="如: 分享文件">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" @click="showSnapshotModal = false">取消</button>
-                        <button type="button" class="btn btn-primary" @click="createSnapshot">创建</button>
+                        <button type="button" class="btn btn-primary" @click="createShareLink">创建</button>
                     </div>
                 </div>
             </div>
@@ -986,7 +993,7 @@
                 const loginForm = ref({ email: '', password: '' });
                 const profileForm = ref({ username: '', oldPassword: '', newPassword: '' });
                 const userForm = ref({ email: '', username: '', password: '', role: 'user' });
-                const shareForm = ref({ dataset: '', name: '' });
+                const shareForm = ref({ folderId: '', fileId: '', name: '' });
                 const newFolderName = ref('');
                 
                 const showFolderModal = ref(false);
@@ -1512,21 +1519,35 @@
                     event.target.nextElementSibling.style.display = 'block';
                 };
                 
-                // 分享链接
-                const createSnapshot = async () => {
-                    if (!shareForm.value.dataset || !shareForm.value.name) {
-                        showToast('请填写完整', 'error'); return;
+                // 分享链接 - 创建
+                const createShareLink = async () => {
+                    if (!shareForm.value.fileId || !shareForm.value.name) {
+                        showToast('请选择文件并填写名称', 'error'); return;
                     }
                     try {
-                        await fetch(API + '/shareLinks?dataset=' + shareForm.value.dataset + '&name=' + shareForm.value.name, {
+                        const res = await fetch(API + '/shares/links', {
                             method: 'POST',
-                            headers: { 'Authorization': 'Bearer ' + token.value }
+                            headers: { 
+                                'Authorization': 'Bearer ' + token.value,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                file_ids: [parseInt(shareForm.value.fileId)],
+                                name: shareForm.value.name
+                            })
                         });
-                        showToast('创建成功');
-                        showSnapshotModal.value = false;
-                        shareForm.value = { dataset: '', name: '' };
-                        loadShareLinks();
-                    } catch(e) { showToast('创建失败', 'error'); }
+                        if (res.ok) {
+                            showToast('创建成功');
+                            showSnapshotModal.value = false;
+                            shareForm.value = { folderId: '', fileId: '', name: '' };
+                            loadShareLinks();
+                        } else {
+                            showToast('创建失败', 'error');
+                        }
+                    } catch(e) { 
+                        console.error(e);
+                        showToast('创建失败', 'error'); 
+                    }
                 };
                 
                 const deleteSnapshot = async (name) => {
