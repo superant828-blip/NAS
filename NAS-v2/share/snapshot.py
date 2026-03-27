@@ -52,6 +52,11 @@ class SnapshotManager:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             if check and result.returncode != 0:
+                error_msg = result.stderr
+                if "permission denied" in error_msg.lower():
+                    raise RuntimeError("权限不足：需要管理员配置ZFS权限")
+                else:
+                    raise RuntimeError(f"Command failed: {error_msg}")
                 raise RuntimeError(f"Command failed: {result.stderr}")
             return result.stdout
         except FileNotFoundError:
