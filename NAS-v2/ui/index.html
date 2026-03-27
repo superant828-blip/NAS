@@ -723,8 +723,7 @@
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 4px; }
         
-        .page { display: none; }
-        .page.active { display: block; }
+        /* .page and .page.active removed - v-show handles visibility */
         
         /* 警告提示 */
         .alert-warning {
@@ -1108,39 +1107,39 @@
                     </div>
                 </div>
                 <div class="nav-menu">
-                    <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'">
+                    <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="navigateTo('dashboard')">
                         <i class="bi bi-speedometer2"></i>
                         <span>仪表盘</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="currentPage = 'files'">
+                    <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="navigateTo('files')">
                         <i class="bi bi-folder-fill"></i>
                         <span>文件管理</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'shares' }" @click="currentPage = 'shares'">
+                    <div class="nav-item" :class="{ active: currentPage === 'shares' }" @click="navigateTo('shares')">
                         <i class="bi bi-folder-share-fill"></i>
                         <span>共享服务</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'albums' }" @click="currentPage = 'albums'">
+                    <div class="nav-item" :class="{ active: currentPage === 'albums' }" @click="navigateTo('albums')">
                         <i class="bi bi-images"></i>
                         <span>相册</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'links' }" @click="currentPage = 'links'">
+                    <div class="nav-item" :class="{ active: currentPage === 'links' }" @click="navigateTo('links')">
                         <i class="bi bi-link-45deg"></i>
                         <span>分享链接</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'snapshots' }" @click="currentPage = 'snapshots'">
+                    <div class="nav-item" :class="{ active: currentPage === 'snapshots' }" @click="navigateTo('snapshots')">
                         <i class="bi bi-camera-fill"></i>
                         <span>快照管理</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'trash' }" @click="currentPage = 'trash'">
+                    <div class="nav-item" :class="{ active: currentPage === 'trash' }" @click="navigateTo('trash')">
                         <i class="bi bi-trash-fill"></i>
                         <span>回收站</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'users' }" v-if="currentUser.role === 'admin'" @click="currentPage = 'users'">
+                    <div class="nav-item" :class="{ active: currentPage === 'users' }" v-if="currentUser.role === 'admin'" @click="navigateTo('users')">
                         <i class="bi bi-people-fill"></i>
                         <span>用户管理</span>
                     </div>
-                    <div class="nav-item" :class="{ active: currentPage === 'profile' }" @click="currentPage = 'profile'">
+                    <div class="nav-item" :class="{ active: currentPage === 'profile' }" @click="navigateTo('profile')">
                         <i class="bi bi-person-fill"></i>
                         <span>个人资料</span>
                     </div>
@@ -1178,7 +1177,7 @@
                 <!-- 内容区 -->
                 <div class="content-area">
                     <!-- 仪表盘 -->
-                    <div v-show="currentPage === 'dashboard'" class="page active">
+                    <div v-show="currentPage === 'dashboard'" class="page">
                         <div class="page-header">
                             <h4 class="page-title"><i class="bi bi-speedometer2"></i>仪表盘</h4>
                         </div>
@@ -1525,7 +1524,7 @@
                             <h5>回收站为空</h5>
                             <p>删除的文件会在这里显示</p>
                             <div class="empty-action">
-                                <button class="toolbar-btn" @click="currentPage = 'files'">
+                                <button class="toolbar-btn" @click="navigateTo('files')">
                                     <i class="bi bi-folder-fill"></i> 返回文件管理
                                 </button>
                             </div>
@@ -1596,7 +1595,7 @@
                     <!-- 相册详情 -->
                     <div v-show="currentPage === 'album-detail'" class="page">
                         <div class="page-header">
-                            <button class="toolbar-btn" @click="currentPage = 'albums'; currentAlbumId = null">
+                            <button class="toolbar-btn" @click="navigateTo('albums'); currentAlbumId = null">
                                 <i class="bi bi-arrow-left"></i> 返回
                             </button>
                             <h4 class="page-title"><i class="bi bi-folder-fill"></i> 相册详情</h4>
@@ -2045,6 +2044,7 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
+console.log("NAS App Loading...");
         const { createApp, ref, computed, watch, onMounted } = Vue;
         
         createApp({
@@ -2149,11 +2149,16 @@
                     else if (page === 'users') loadUsers();
                 });
                 
-                const loadData = () => {
+                const loadData = () => { 
                     loadPools();
                     loadShares();
                     loadSnapshots();
                     loadSystemStatus();
+                };
+                
+                // 导航函数
+                const navigateTo = (page) => {
+                    currentPage.value = page;
                 };
                 
                 // 登录
@@ -3047,7 +3052,7 @@
                     showCreatePool, showSmbModal, showNfsModal, showSnapshotModal, showUserModal, showFolderModal, showShareModal, showCreateLinkModal, showRenameModal, showMoveModal, moveForm,
                     toasts, showToast, setBtnLoading,
                     showPhotoPreview, previewPhoto, openPhotoPreview, closePhotoPreview, deletePhoto,
-                    handleLogin, logout, loadData, loadPools, createPool, deletePool, scrubPool,
+                    handleLogin, logout, loadData, navigateTo, loadPools, createPool, deletePool, scrubPool,
                     loadShares, createSmbShare, createNfsShare, deleteShare, copyShareLink,
                     loadShareLinks, getShareUrl, copyShareUrl, createShareLink, createShareLinkFromModal, deleteShareLink,
                     loadSnapshots, createSnapshot, deleteSnapshot, rollbackSnapshot,
