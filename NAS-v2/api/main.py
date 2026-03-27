@@ -187,6 +187,16 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# ==================== 插件系统注册 ====================
+# 导入所有插件路由
+try:
+    from api.plugins import get_routers
+    for router in get_routers():
+        app.include_router(router)
+    print("✓ 插件系统加载成功")
+except Exception as e:
+    print(f"⚠ 插件加载失败，使用传统模式: {e}")
+
 # CORS 配置
 app.add_middleware(
     CORSMiddleware,
