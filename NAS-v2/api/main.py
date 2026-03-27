@@ -994,7 +994,7 @@ async def rename_file(file_id: int, request: FileRename, current_user: User = De
         conn.close()
 
 
-@app.get("/api/v1/files/folders")
+@app.get("/api/v1/folders")
 async def list_folders(current_user: User = Depends(get_current_user)):
     """获取文件夹列表（用于移动文件）"""
     conn = get_file_db()

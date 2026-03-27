@@ -2441,7 +2441,7 @@ console.log("NAS App Loading...");
                 // 获取文件夹树
                 const loadFolders = async () => {
                     try {
-                        const res = await fetch(API + '/files/folders', {
+                        const res = await fetch(API + '/folders', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
                         if (!res.ok) {
