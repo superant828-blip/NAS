@@ -1386,6 +1386,9 @@
                             <button class="toolbar-btn" v-if="selectedFiles.size > 0" @click="showMoveDialog">
                                 <i class="bi bi-folder-fill"></i> 移动
                             </button>
+                            <button class="toolbar-btn" v-if="selectedFiles.size === 1" @click="downloadFile">
+                                <i class="bi bi-download"></i> 下载
+                            </button>
                             <button class="toolbar-btn" v-if="selectedFiles.size > 0" @click="showShareModal = true">
                                 <i class="bi bi-share"></i> 分享选中
                             </button>

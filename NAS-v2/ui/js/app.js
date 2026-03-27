@@ -667,6 +667,15 @@ createApp({
             }
         };
         
+        // 下载文件
+        const downloadFile = async () => {
+            if (selectedFiles.value.size !== 1) {
+                alert('请选择一个文件'); return;
+            }
+            const fileId = Array.from(selectedFiles.value)[0];
+            window.open(API_BASE + '/files/' + fileId + '/download', '_blank');
+        };
+        
         const createShareLinkFromModal = async () => {
             if (!createLinkForm.value.fileId) {
                 alert('请选择文件'); return;
