@@ -1629,7 +1629,12 @@ async def view_share(token: str, password: Optional[str] = None):
         # 检查密码
         if share['password_hash']:
             from passlib.hash import bcrypt
-            if not password or not bcrypt.verify(password, share['password_hash']):
+            password_valid = False
+            try:
+                password_valid = password and bcrypt.verify(password, share['password_hash'])
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid share password hash: {e}")
+            if not password_valid:
                 return {"require_password": True, "token": token}
         
         # 增加访问计数

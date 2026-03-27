@@ -1412,14 +1412,26 @@
                     for (let file of files) {
                         const formData = new FormData();
                         formData.append('file', file);
-                        await fetch(API + '/photos/upload', {
+                        if (currentAlbumId.value) {
+                            formData.append('album_id', currentAlbumId.value);
+                        }
+                        const res = await fetch(API + '/photos/upload', {
                             method: 'POST',
                             headers: { 'Authorization': 'Bearer ' + token.value },
                             body: formData
                         });
+                        if (!res.ok) {
+                            const err = await res.json();
+                            showToast('上传失败: ' + (err.detail || '未知错误'), 'error');
+                            return;
+                        }
                     }
                     showToast('上传完成');
-                    loadAlbums();
+                    if (currentAlbumId.value) {
+                        viewAlbum(currentAlbumId.value);
+                    } else {
+                        loadAlbums();
+                    }
                 };
                 
                 const createAlbum = async () => {

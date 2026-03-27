@@ -78,3 +78,25 @@
 - a9b283a fix: 修复前端初始化时undefined报错
 - b0f83e6 fix: 修复ZFS数据集列表API
 - 25bfd4d fix: 修复ZFS未安装时API报错500
+## 2026-03-27 代码问题修复
+
+### 已修复问题
+
+1. **密码哈希兼容性问题** - security/auth.py
+   - 原因: 新系统使用bcrypt，旧系统明文存储
+   - 修复: 添加异常处理，兼容两种格式，自动升级为哈希
+
+2. **createAlbum无错误处理** - index.html
+   - 原因: 500错误时无用户提示
+   - 修复: 添加res.ok检查和错误提示
+
+3. **分享模态框文件选择** - index.html  
+   - 原因: "分享选中"时selectedFiles未填充到表单
+   - 修复: 添加watch监听showShareModal变化自动填充
+
+### 已知剩余问题
+
+- mobile.html照片上传缺少album_id传递
+- 仪表盘h5结束标签错误
+- 后端分享密码验证未处理异常
+
