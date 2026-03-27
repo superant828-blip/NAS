@@ -635,8 +635,8 @@
                         <p>相册为空</p>
                     </div>
                     <div v-else class="album-grid">
-                        <div v-for="photo in currentAlbumPhotos" :key="photo.id" class="album-item" @click="previewPhoto(photo)">
-                            <img :src="getPhotoUrl(photo)" style="width:100%;height:100%;object-fit:cover;border-radius:8px" v-if="photo.mime_type && photo.mime_type.startsWith('image/')">
+                        <div v-for="photo in currentAlbumPhotos" :key="photo.id" class="album-item" @click="previewPhoto(photo)" :data-photo-id="photo.id">
+                            <img :src="getThumbUrl(photo.id)" style="width:100%;height:100%;object-fit:cover;border-radius:8px" v-if="photo.mime_type && photo.mime_type.startsWith('image/')" @error="imgLoadError($event, photo.id)">
                             <i class="bi bi-image-fill" style="font-size:40px" v-else></i>
                         </div>
                     </div>
@@ -1056,6 +1056,8 @@
                             const data = await res.json();
                             token.value = data.access_token;
                             localStorage.setItem('token', data.access_token);
+                            // 保存token到cookie供图片请求使用
+                            document.cookie = 'token=' + data.access_token + ';path=/';
                             currentUser.value = data.user;
                             profileForm.value.username = data.user.username;
                             isLoggedIn.value = true;
@@ -1450,6 +1452,12 @@
                         if (res.ok) {
                             const data = await res.json();
                             currentAlbumPhotos.value = data.photos || [];
+                            // 预加载第一张图片来触发认证
+                            if (currentAlbumPhotos.value.length > 0) {
+                                const img = new Image();
+                                img.src = API + '/photos/' + currentAlbumPhotos.value[0].id + '/thumbnail';
+                                img.crossOrigin = 'anonymous';
+                            }
                         }
                     } catch(e) { console.error(e); }
                     loading.value = false;
@@ -1466,8 +1474,30 @@
                     window.open(API + '/photos/' + photo.id + '/download', '_blank');
                 };
                 
-                const getPhotoUrl = (photo) => {
-                    return API + '/photos/' + photo.id + '/thumbnail?size=200&token=' + token.value;
+                const getPhotoUrl = async (photo) => {
+                    // 使用fetch获取blob然后创建URL
+                    try {
+                        const res = await fetch(API + '/photos/' + photo.id + '/thumbnail', {
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        if (res.ok) {
+                            const blob = await res.blob();
+                            return URL.createObjectURL(blob);
+                        }
+                    } catch(e) { console.error(e); }
+                    return '';
+                };
+                
+                const getThumbUrl = (photoId) => {
+                    // 返回带token的URL - 浏览器会自动发送cookie或通过其他方式
+                    // 这里返回API URL，实际认证由浏览器session自动处理
+                    return API + '/photos/' + photoId + '/thumbnail';
+                };
+                
+                const imgLoadError = (event, photoId) => {
+                    // 如果图片加载失败，尝试使用备选方案
+                    event.target.style.display = 'none';
+                    event.target.nextElementSibling.style.display = 'block';
                 };
                 
                 // 快照

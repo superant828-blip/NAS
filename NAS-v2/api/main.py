@@ -1460,7 +1460,11 @@ async def get_photo(photo_id: int, current_user: User = Depends(get_current_user
 
 
 @app.get("/api/v1/photos/{photo_id}/thumbnail")
-async def get_photo_thumbnail(photo_id: int, current_user: User = Depends(get_current_user)):
+async def get_photo_thumbnail(
+    photo_id: int, 
+    t: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
     """获取照片缩略图"""
     conn = get_file_db()
     try:
