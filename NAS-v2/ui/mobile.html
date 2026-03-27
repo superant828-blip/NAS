@@ -1444,10 +1444,13 @@
                 const loadAlbumPhotos = async (albumId) => {
                     loading.value = true;
                     try {
-                        const res = await fetch(API + '/albums/' + albumId + '/photos', { 
+                        const res = await fetch(API + '/albums/' + albumId, { 
                             headers: { 'Authorization': 'Bearer ' + token.value } 
                         });
-                        if (res.ok) currentAlbumPhotos.value = await res.json();
+                        if (res.ok) {
+                            const data = await res.json();
+                            currentAlbumPhotos.value = data.photos || [];
+                        }
                     } catch(e) { console.error(e); }
                     loading.value = false;
                 };
