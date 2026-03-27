@@ -539,7 +539,7 @@ createApp({
         };
         
         const previewFile = (id) => {
-            window.open(API_BASE + '/files/' + id + '/download?token=' + token.value, '_blank');
+            window.open(API_BASE + '/files/' + id + '/download', '_blank');
         };
         
         // 批量移动
