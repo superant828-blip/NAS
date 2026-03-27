@@ -2103,6 +2103,16 @@
                 
                 // 初始化
                 onMounted(async () => {
+                    // 初始化数据，避免undefined
+                    pools.value = [];
+                    shares.value = { smb: [], nfs: [] };
+                    snapshots.value = [];
+                    files.value = [];
+                    trashItems.value = [];
+                    albums.value = [];
+                    users.value = [];
+                    shareLinks.value = [];
+                    
                     if (token.value) {
                         try {
                             const res = await fetch(API + '/auth/me', { 
@@ -2116,8 +2126,14 @@
                             } else {
                                 token.value = '';
                                 localStorage.removeItem('token');
+                                isLoggedIn.value = false;
                             }
-                        } catch(e) { console.error(e); }
+                        } catch(e) { 
+                            console.error(e); 
+                            isLoggedIn.value = false;
+                        }
+                    } else {
+                        isLoggedIn.value = false;
                     }
                 });
                 
@@ -2178,7 +2194,7 @@
                 };
                 
                 // 文件管理
-                const loadFiles = async () => {
+                const loadFiles = async () => { files.value = []; 
                     loading.value = true;
                     try {
                         let url = API + '/files';
@@ -2613,6 +2629,7 @@
                 // 存储池
                 const loadPools = async () => {
                     loading.value = true;
+                    pools.value = [];  // 先清空，避免undefined问题
                     try {
                         const res = await fetch(API + '/storage/pools', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
@@ -2623,7 +2640,7 @@
                         }
                         const data = await res.json();
                         pools.value = Array.isArray(data) ? data : [];
-                        systemStatus.value.pools = pools.value.length;
+                        systemStatus.value.pools = pools.value ? pools.value.length : 0;
                     } catch(e) { 
                         console.error(e); 
                         pools.value = [];
@@ -2684,7 +2701,7 @@
                 };
                 
                 // 共享
-                const loadShares = async () => {
+                const loadShares = async () => { shares.value = { smb: [], nfs: [] }; 
                     try {
                         const res = await fetch(API + '/shares/all', {
                             headers: { 'Authorization': 'Bearer ' + token.value }
@@ -2772,7 +2789,7 @@
                 };
                 
                 // 快照
-                const loadSnapshots = async () => {
+                const loadSnapshots = async () => { snapshots.value = []; 
                     loading.value = true;
                     try {
                         const res = await fetch(API + '/snapshots', {
