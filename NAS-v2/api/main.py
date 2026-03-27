@@ -1059,7 +1059,7 @@ async def move_file(file_id: int, request: FileMove, current_user: User = Depend
         )
         conn.commit()
         
-        return {"message": "File moved successfully", "parent_id": new_parent_id}
+        return {"message": "File moved successfully", "new_path": new_full_path, "file_name": file['name'], "parent_id": new_parent_id}
     finally:
         conn.close()
 

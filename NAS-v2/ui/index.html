@@ -2470,21 +2470,35 @@ console.log("NAS App Loading...");
                         return;
                     }
                     setBtnLoading('move', true);
+                    let successCount = 0;
+                    let failCount = 0;
+                    let newPaths = [];
                     try {
                         const fileIds = Array.from(selectedFiles.value);
                         for (let id of fileIds) {
-                            await fetch(API + '/files/' + id + '/move', {
+                            const res = await fetch(API + '/files/' + id + '/move', {
                                 method: 'PUT',
                                 headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ parent_id: moveForm.value.targetFolderId })
                             });
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (data.new_path) newPaths.push(data.new_path);
+                                successCount++;
+                            } else {
+                                failCount++;
+                            }
                         }
-                        showToast('移动成功', 'success');
+                        if (failCount === 0) {
+                            showToast(`移动成功！${newPaths.length > 0 ? '\n新路径: ' + newPaths.join(', ') : ''}`, 'success');
+                        } else {
+                            showToast(`移动完成：成功 ${successCount} 个，失败 ${failCount} 个`, 'warning');
+                        }
                         showMoveModal.value = false;
                         selectedFiles.value = new Set();
                         loadFiles();
                     } catch(e) {
-                        showToast('移动失败', 'error');
+                        showToast('移动失败: ' + (e.message || '未知错误'), 'error');
                     }
                     setBtnLoading('move', false);
                 };
