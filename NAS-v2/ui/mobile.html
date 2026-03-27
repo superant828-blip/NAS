@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NAS 私有云 - 移动端</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0091ea;
+            --primary-dark: #0069c0;
+            --success: #00c853;
+            --warning: #ffab00;
+            --danger: #ff1744;
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --bg-sidebar: #1c2128;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-secondary: #8b949e;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* 登录页 */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            padding: 20px;
+        }
+        
+        .login-box {
+            width: 100%;
+            max-width: 360px;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .login-box h3 { text-align: center; margin-bottom: 24px; }
+        
+        .form-control {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .form-control:focus {
+            background: var(--bg-dark);
+            border-color: var(--primary);
+            color: var(--text);
+            box-shadow: 0 0 0 3px rgba(0,145,234,0.2);
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover { background: var(--primary-dark); }
+        
+        /* 移动端布局 */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .header {
+            background: var(--bg-card);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h4 { margin: 0; font-size: 18px; }
+        
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 24px;
+            padding: 8px;
+        }
+        
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            border-top: 1px solid var(--border);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .nav-item i { font-size: 24px; margin-bottom: 4px; }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        /* 内容区域 */
+        .content {
+            flex: 1;
+            padding: 16px;
+            padding-bottom: 80px;
+            overflow-y: auto;
+        }
+        
+        /* 卡片 */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* 文件列表 */
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .file-icon {
+            font-size: 28px;
+            margin-right: 14px;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .file-icon.folder { color: #ffc107; }
+        .file-icon.image { color: #4facfe; }
+        .file-icon.video { color: #f093fb; }
+        .file-icon.pdf { color: #ff6b6b; }
+        
+        .file-info { flex: 1; min-width: 0; }
+        .file-name { 
+            font-size: 15px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
+        .file-size { 
+            font-size: 12px; 
+            color: var(--text-secondary); 
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .file-actions button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            padding: 8px;
+        }
+        
+        /* 浮动按钮 */
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-size: 28px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 90;
+        }
+        
+        /* 模态框 */
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin: 20px;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 16px;
+        }
+        
+        .modal-body { padding: 16px; }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 16px;
+        }
+        
+        .btn-close-white { filter: invert(1); }
+        
+        /* 相册 */
+        .album-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .album-item {
+            aspect-ratio: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .album-item i { font-size: 40px; color: #ffc107; }
+        
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .toolbar-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 8px;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        
+        .toolbar-btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        /* 加载 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i { font-size: 48px; margin-bottom: 16px; }
+        
+        /* 搜索框 */
+        .search-box {
+            display: flex;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0 12px;
+            margin-bottom: 16px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text);
+            padding: 12px 0;
+        }
+        
+        .search-box input:focus { outline: none; }
+        
+        .search-box i { color: var(--text-secondary); line-height: 44px; }
+        
+        /* Toast提示 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        
+        .toast-msg {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 进度条 */
+        .progress {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 8px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录页 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="login-box">
+                <h3><i class="bi bi-cloud"></i> NAS 私有云</h3>
+                <input type="email" class="form-control" v-model="loginForm.email" placeholder="邮箱">
+                <input type="password" class="form-control" v-model="loginForm.password" placeholder="密码" @keyup.enter="handleLogin">
+                <button class="btn btn-primary" @click="handleLogin" :disabled="btnLoading.login">
+                    {{ btnLoading.login ? '登录中...' : '登录' }}
+                </button>
+            </div>
+        </div>
+        
+        <!-- 主应用 -->
+        <div v-else class="app-container">
+            <!-- 顶部栏 -->
+            <div class="header">
+                <button class="header-btn" @click="sidebarShow = !sidebarShow">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h4>{{ pageTitle }}</h4>
+                <button class="header-btn" @click="loadData">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            
+            <!-- 内容区 -->
+            <div class="content">
+                <!-- 仪表盘 -->
+                <div v-show="currentPage === 'dashboard'">
+                    <div class="card-grid">
+                        <div class="card stat-card">
+                            <div class="stat-value">{{ pools.length }}</div>
+                            <div class="stat-label">存储池</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-value">{{ shares.smb.length + shares.nfs.length }}</div>
+                            <div class="stat-label">共享服务</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-value">{{ albums.length }}</div>
+                            <div class="stat-label">相册</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-value">{{ snapshots.length }}</div>
+                            <div class="stat-label">快照</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h6 class="mb-3">存储池状态</h6>
+                        <div v-for="pool in pools" :key="pool.name" class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>{{ pool.name }}</span>
+                                <span>{{ pool.health }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" :style="{width: pool.cap}"></div>
+                            </div>
+                            <small class="text-secondary">{{ pool.allocated }} / {{ pool.size }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文件管理 -->
+                <div v-show="currentPage === 'files'">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" v-model="searchQuery" placeholder="搜索文件..." @keyup.enter="searchFiles">
+                    </div>
+                    
+                    <div class="toolbar">
+                        <button class="toolbar-btn toolbar-btn-primary" @click="triggerUpload">
+                            <i class="bi bi-cloud-upload"></i> 上传
+                        </button>
+                        <button class="toolbar-btn" @click="showFolderModal = true">
+                            <i class="bi bi-folder-plus"></i> 新建
+                        </button>
+                        <button class="toolbar-btn" @click="goParent" v-if="currentFolderId">
+                            <i class="bi bi-arrow-up"></i> 返回
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="uploadInput" style="display:none" multiple @change="handleUpload">
+                    
+                    <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                    <div v-else-if="!files.length" class="empty-state">
+                        <i class="bi bi-folder2-open"></i>
+                        <p>文件夹为空</p>
+                    </div>
+                    <div v-else>
+                        <div v-for="f in files" :key="f.id" class="file-item" @click="handleFileClick(f)">
+                            <div class="file-icon" :class="{ folder: f.is_folder }">
+                                <i :class="getFileIcon(f)"></i>
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ f.name }}</div>
+                                <div class="file-size">{{ f.is_folder ? '文件夹' : formatSize(f.size) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 相册 -->
+                <div v-show="currentPage === 'albums'">
+                    <div class="toolbar">
+                        <button class="toolbar-btn toolbar-btn-primary" @click="triggerPhotoUpload">
+                            <i class="bi bi-cloud-upload"></i> 上传
+                        </button>
+                        <button class="toolbar-btn" @click="createAlbum">
+                            <i class="bi bi-folder-plus"></i> 新建
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="photoUpload" style="display:none" multiple accept="image/*" @change="handlePhotoUpload">
+                    
+                    <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                    <div v-else-if="!albums.length" class="empty-state">
+                        <i class="bi bi-images"></i>
+                        <p>暂无相册</p>
+                    </div>
+                    <div v-else class="album-grid">
+                        <div v-for="album in albums" :key="album.id" class="album-item" @click="viewAlbum(album.id)">
+                            <i class="bi bi-folder-fill"></i>
+                            <div class="mt-2">{{ album.name }}</div>
+                            <small class="text-secondary">{{ album.photo_count || 0 }} 张</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 快照 -->
+                <div v-show="currentPage === 'snapshots'">
+                    <div class="toolbar">
+                        <button class="toolbar-btn toolbar-btn-primary" @click="showSnapshotModal = true; loadDatasets()">
+                            <i class="bi bi-plus-circle"></i> 创建快照
+                        </button>
+                    </div>
+                    
+                    <div v-if="loading" class="loading"><div class="spinner"></div></div>
+                    <div v-else-if="!snapshots.length" class="empty-state">
+                        <i class="bi bi-camera"></i>
+                        <p>暂无快照</p>
+                    </div>
+                    <div v-else>
+                        <div v-for="snap in snapshots" :key="snap.name" class="card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-camera text-warning"></i>
+                                    <span class="ms-2">{{ snap.name }}</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteSnapshot(snap.name)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 用户 -->
+                <div v-show="currentPage === 'users'">
+                    <div v-if="currentUser.role !== 'admin'" class="empty-state">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <p>需要管理员权限</p>
+                    </div>
+                    <div v-else>
+                        <div class="toolbar">
+                            <button class="toolbar-btn toolbar-btn-primary" @click="showUserModal = true">
+                                <i class="bi bi-person-plus"></i> 添加用户
+                            </button>
+                        </div>
+                        
+                        <div v-for="user in users" :key="user.id" class="card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div>{{ user.username }}</div>
+                                    <small class="text-secondary">{{ user.email }}</small>
+                                </div>
+                                <span class="badge bg-secondary">{{ user.role }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设置 -->
+                <div v-show="currentPage === 'profile'">
+                    <div class="card">
+                        <h6 class="mb-3">个人信息</h6>
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" v-model="profileForm.username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" :value="currentUser.email" disabled>
+                        </div>
+                        <button class="btn btn-primary" @click="updateProfile">保存</button>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <h6 class="mb-3">修改密码</h6>
+                        <div class="mb-3">
+                            <label class="form-label">旧密码</label>
+                            <input type="password" class="form-control" v-model="profileForm.oldPassword">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码</label>
+                            <input type="password" class="form-control" v-model="profileForm.newPassword">
+                        </div>
+                        <button class="btn btn-primary" @click="changePassword">修改密码</button>
+                    </div>
+                    
+                    <button class="btn btn-outline-danger w-100 mt-4" @click="logout">
+                        <i class="bi bi-box-arrow-right"></i> 退出登录
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 底部导航 -->
+            <div class="bottom-nav">
+                <div class="nav-item" :class="{ active: currentPage === 'dashboard' }" @click="currentPage = 'dashboard'">
+                    <i class="bi bi-house"></i>
+                    <span>首页</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentPage === 'files' }" @click="currentPage = 'files'">
+                    <i class="bi bi-folder"></i>
+                    <span>文件</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentPage === 'albums' }" @click="currentPage = 'albums'">
+                    <i class="bi bi-images"></i>
+                    <span>相册</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentPage === 'snapshots' }" @click="currentPage = 'snapshots'">
+                    <i class="bi bi-camera"></i>
+                    <span>快照</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentPage === 'profile' }" @click="currentPage = 'profile'">
+                    <i class="bi bi-person"></i>
+                    <span>我的</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新建文件夹弹窗 -->
+        <div v-if="showFolderModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">新建文件夹</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="showFolderModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" class="form-control" v-model="newFolderName" placeholder="文件夹名称" @keyup.enter="createFolder">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showFolderModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createFolder">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新建快照弹窗 -->
+        <div v-if="showSnapshotModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">创建快照</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="showSnapshotModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">数据集</label>
+                            <select class="form-select" v-model="snapshotForm.dataset">
+                                <option value="">请选择</option>
+                                <option v-for="ds in datasets" :key="ds.name" :value="ds.name">{{ ds.name }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">快照名称</label>
+                            <input type="text" class="form-control" v-model="snapshotForm.name" placeholder="如: backup-20240327">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showSnapshotModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createSnapshot">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新建用户弹窗 -->
+        <div v-if="showUserModal" class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">添加用户</h5>
+                        <button type="button" class="btn-close btn-close-white" @click="showUserModal = false"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" v-model="userForm.email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" v-model="userForm.username">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码</label>
+                            <input type="password" class="form-control" v-model="userForm.password">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">角色</label>
+                            <select class="form-select" v-model="userForm.role">
+                                <option value="user">普通用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showUserModal = false">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createUser">创建</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast -->
+        <div class="toast-container">
+            <div v-for="toast in toasts" :key="toast.id" class="toast-msg">
+                {{ toast.message }}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script>
+        const { createApp, ref, computed, watch, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const API = 'http://' + location.host + '/api/v1';
+                const token = ref(localStorage.getItem('token') || '');
+                const isLoggedIn = ref(false);
+                const currentUser = ref({});
+                const currentPage = ref('dashboard');
+                const currentFolderId = ref(null);
+                const loading = ref(false);
+                const sidebarShow = ref(false);
+                const searchQuery = ref('');
+                const toasts = ref([]);
+                
+                const pools = ref([]);
+                const datasets = ref([]);
+                const shares = ref({ smb: [], nfs: [] });
+                const snapshots = ref([]);
+                const albums = ref([]);
+                const users = ref([]);
+                const files = ref([]);
+                
+                const loginForm = ref({ email: '', password: '' });
+                const profileForm = ref({ username: '', oldPassword: '', newPassword: '' });
+                const userForm = ref({ email: '', username: '', password: '', role: 'user' });
+                const snapshotForm = ref({ dataset: '', name: '' });
+                const newFolderName = ref('');
+                
+                const showFolderModal = ref(false);
+                const showSnapshotModal = ref(false);
+                const showUserModal = ref(false);
+                const btnLoading = ref({});
+                
+                const pageTitle = computed(() => {
+                    const titles = { dashboard: '首页', files: '文件管理', albums: '相册', snapshots: '快照', profile: '个人设置' };
+                    return titles[currentPage.value] || 'NAS';
+                });
+                
+                const showToast = (msg, type = 'info') => {
+                    const id = Date.now();
+                    toasts.value.push({ id, message: msg });
+                    setTimeout(() => toasts.value = toasts.value.filter(t => t.id !== id), 3000);
+                };
+                
+                const setBtnLoading = (key, val) => {
+                    btnLoading.value[key] = val;
+                };
+                
+                onMounted(async () => {
+                    if (token.value) {
+                        try {
+                            const res = await fetch(API + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                            if (res.ok) {
+                                currentUser.value = await res.json();
+                                profileForm.value.username = currentUser.value.username;
+                                isLoggedIn.value = true;
+                                loadData();
+                            } else {
+                                token.value = '';
+                                localStorage.removeItem('token');
+                            }
+                        } catch(e) { console.error(e); }
+                    }
+                });
+                
+                watch(currentPage, (page) => {
+                    if (page === 'dashboard') loadPools();
+                    else if (page === 'files') loadFiles();
+                    else if (page === 'albums') loadAlbums();
+                    else if (page === 'snapshots') loadSnapshots();
+                    else if (page === 'users') loadUsers();
+                });
+                
+                const loadData = () => {
+                    loadPools();
+                    loadShares();
+                    loadSnapshots();
+                    loadAlbums();
+                    loadUsers();
+                };
+                
+                const handleLogin = async () => {
+                    setBtnLoading('login', true);
+                    try {
+                        const res = await fetch(API + '/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(loginForm.value)
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            token.value = data.access_token;
+                            localStorage.setItem('token', data.access_token);
+                            currentUser.value = data.user;
+                            profileForm.value.username = data.user.username;
+                            isLoggedIn.value = true;
+                            loadData();
+                        } else {
+                            showToast('登录失败', 'error');
+                        }
+                    } catch(e) { showToast('登录失败', 'error'); }
+                    setBtnLoading('login', false);
+                };
+                
+                const logout = () => {
+                    token.value = '';
+                    localStorage.removeItem('token');
+                    isLoggedIn.value = false;
+                };
+                
+                // 数据加载
+                const loadPools = async () => {
+                    try {
+                        const res = await fetch(API + '/storage/pools', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) pools.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const loadDatasets = async () => {
+                    try {
+                        const res = await fetch(API + '/storage/datasets', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) datasets.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const loadShares = async () => {
+                    try {
+                        const res = await fetch(API + '/shares/all', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) shares.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const loadSnapshots = async () => {
+                    try {
+                        const res = await fetch(API + '/snapshots', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) snapshots.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const loadAlbums = async () => {
+                    try {
+                        const res = await fetch(API + '/albums', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) albums.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const loadUsers = async () => {
+                    try {
+                        const res = await fetch(API + '/users', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) users.value = await res.json();
+                    } catch(e) { console.error(e); }
+                };
+                
+                const loadFiles = async () => {
+                    loading.value = true;
+                    try {
+                        let url = API + '/files';
+                        if (currentFolderId.value) url += '?parent_id=' + currentFolderId.value;
+                        const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) files.value = await res.json();
+                    } catch(e) { console.error(e); }
+                    loading.value = false;
+                };
+                
+                // 文件操作
+                const getFileIcon = (f) => {
+                    if (f.is_folder) return 'bi bi-folder-fill';
+                    const ext = (f.name || '').split('.').pop().toLowerCase();
+                    if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'bi bi-image-fill';
+                    if (['mp4','avi','mov','mkv'].includes(ext)) return 'bi bi-film-fill';
+                    if (ext === 'pdf') return 'bi bi-file-earmark-pdf-fill';
+                    return 'bi bi-file-earmark';
+                };
+                
+                const formatSize = (bytes) => {
+                    if (!bytes) return '0 B';
+                    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+                };
+                
+                const handleFileClick = (f) => {
+                    if (f.is_folder) {
+                        currentFolderId.value = f.id;
+                        loadFiles();
+                    } else {
+                        // 预览或下载
+                        window.open(API + '/files/' + f.id + '/download?token=' + token.value);
+                    }
+                };
+                
+                const goParent = async () => {
+                    if (!currentFolderId.value) return;
+                    try {
+                        const res = await fetch(API + '/files/' + currentFolderId.value, { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        if (res.ok) {
+                            const file = await res.json();
+                            currentFolderId.value = file.parent_id;
+                            loadFiles();
+                        }
+                    } catch(e) { currentFolderId.value = null; loadFiles(); }
+                };
+                
+                const createFolder = async () => {
+                    if (!newFolderName.value) return;
+                    try {
+                        const res = await fetch(API + '/files/folder', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: newFolderName.value, parent_id: currentFolderId.value })
+                        });
+                        if (res.ok) {
+                            showToast('创建成功');
+                            showFolderModal.value = false;
+                            newFolderName.value = '';
+                            loadFiles();
+                        } else {
+                            showToast('创建失败', 'error');
+                        }
+                    } catch(e) { showToast('创建失败', 'error'); }
+                };
+                
+                const triggerUpload = () => document.getElementById('uploadInput').click();
+                
+                const handleUpload = async (e) => {
+                    const files = e.target.files;
+                    if (!files.length) return;
+                    
+                    for (let file of files) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        if (currentFolderId.value) formData.append('parent_id', currentFolderId.value);
+                        
+                        await fetch(API + '/files/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value },
+                            body: formData
+                        });
+                    }
+                    showToast('上传完成');
+                    loadFiles();
+                };
+                
+                // 相册
+                const triggerPhotoUpload = () => document.getElementById('photoUpload').click();
+                
+                const handlePhotoUpload = async (e) => {
+                    const files = e.target.files;
+                    if (!files.length) return;
+                    
+                    for (let file of files) {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        await fetch(API + '/photos/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value },
+                            body: formData
+                        });
+                    }
+                    showToast('上传完成');
+                    loadAlbums();
+                };
+                
+                const createAlbum = async () => {
+                    const name = prompt('请输入相册名称:');
+                    if (!name) return;
+                    try {
+                        await fetch(API + '/albums', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name })
+                        });
+                        loadAlbums();
+                    } catch(e) { showToast('创建失败', 'error'); }
+                };
+                
+                const viewAlbum = (id) => {
+                    // TODO: 相册详情
+                    showToast('功能开发中');
+                };
+                
+                // 快照
+                const createSnapshot = async () => {
+                    if (!snapshotForm.value.dataset || !snapshotForm.value.name) {
+                        showToast('请填写完整', 'error'); return;
+                    }
+                    try {
+                        await fetch(API + '/snapshots?dataset=' + snapshotForm.value.dataset + '&name=' + snapshotForm.value.name, {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        showToast('创建成功');
+                        showSnapshotModal.value = false;
+                        snapshotForm.value = { dataset: '', name: '' };
+                        loadSnapshots();
+                    } catch(e) { showToast('创建失败', 'error'); }
+                };
+                
+                const deleteSnapshot = async (name) => {
+                    if (!confirm('确定删除?')) return;
+                    try {
+                        await fetch(API + '/snapshots/' + name, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + token.value }
+                        });
+                        loadSnapshots();
+                    } catch(e) { showToast('删除失败', 'error'); }
+                };
+                
+                // 用户
+                const createUser = async () => {
+                    try {
+                        await fetch(API + '/users', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify(userForm.value)
+                        });
+                        showToast('创建成功');
+                        showUserModal.value = false;
+                        userForm.value = { email: '', username: '', password: '', role: 'user' };
+                        loadUsers();
+                    } catch(e) { showToast('创建失败', 'error'); }
+                };
+                
+                const updateProfile = async () => {
+                    try {
+                        await fetch(API + '/users/me', {
+                            method: 'PUT',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username: profileForm.value.username })
+                        });
+                        showToast('保存成功');
+                    } catch(e) { showToast('保存失败', 'error'); }
+                };
+                
+                const changePassword = async () => {
+                    if (!profileForm.value.oldPassword || !profileForm.value.newPassword) {
+                        showToast('请填写密码', 'error'); return;
+                    }
+                    try {
+                        await fetch(API + '/users/me/password', {
+                            method: 'PUT',
+                            headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ old_password: profileForm.value.oldPassword, new_password: profileForm.value.newPassword })
+                        });
+                        showToast('修改成功');
+                        profileForm.value.oldPassword = '';
+                        profileForm.value.newPassword = '';
+                    } catch(e) { showToast('修改失败', 'error'); }
+                };
+                
+                const searchFiles = () => {
+                    loadFiles();
+                };
+                
+                return {
+                    isLoggedIn, currentPage, currentUser, currentFolderId, loading, searchQuery,
+                    pools, datasets, shares, snapshots, albums, users, files,
+                    loginForm, profileForm, userForm, snapshotForm, newFolderName,
+                    showFolderModal, showSnapshotModal, showUserModal, btnLoading,
+                    pageTitle, toasts,
+                    handleLogin, logout, loadData, loadPools, loadDatasets, loadFiles,
+                    getFileIcon, formatSize, handleFileClick, goParent, createFolder, triggerUpload, handleUpload,
+                    triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum,
+                    createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

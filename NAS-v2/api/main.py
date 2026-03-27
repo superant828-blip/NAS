@@ -2175,6 +2175,15 @@ async def root():
     """)
 
 
+@app.get("/mobile", response_class=HTMLResponse)
+async def mobile_ui():
+    """移动端页面"""
+    mobile_path = ROOT / "ui" / "mobile.html"
+    if mobile_path.exists():
+        return HTMLResponse(content=mobile_path.read_text())
+    return HTMLResponse(content="移动端页面不存在")
+
+
 # ==================== 辅助函数 ====================
 
 def asdict(obj):
