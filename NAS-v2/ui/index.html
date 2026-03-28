@@ -303,6 +303,34 @@
             gap: 2px;
         }
         
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .file-list-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            font-weight: bold;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        .file-list-header > span {
+            flex-shrink: 0;
+        }
+        
+        .file-list-header .col-check { width: 40px; }
+        .file-list-header .col-icon { width: 32px; margin-right: 12px; }
+        .file-list-header .col-name { flex: 1; }
+        .file-list-header .col-size { width: 100px; text-align: center; }
+        .file-list-header .col-type { width: 80px; text-align: center; }
+        .file-list-header .col-date { width: 150px; text-align: center; }
+        
         .file-list-item {
             display: flex;
             align-items: center;
@@ -324,31 +352,12 @@
             border-color: var(--primary);
         }
         
-        .file-list-item .file-icon {
-            width: 32px;
-            font-size: 20px;
-            margin-right: 12px;
-        }
-        
-        .file-list-item .file-name {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .file-list-item .file-size,
-        .file-list-item .file-date,
-        .file-list-item .file-type {
-            width: 100px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            text-align: center;
-        }
-        
-        .file-list-item .file-type {
-            width: 80px;
-        }
+        .file-list-item .col-check { width: 40px; flex-shrink: 0; }
+        .file-list-item .col-icon { width: 32px; font-size: 20px; margin-right: 12px; flex-shrink: 0; }
+        .file-list-item .col-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-list-item .col-size { width: 100px; color: var(--text-secondary); font-size: 13px; text-align: center; flex-shrink: 0; }
+        .file-list-item .col-type { width: 80px; color: var(--text-secondary); font-size: 13px; text-align: center; flex-shrink: 0; }
+        .file-list-item .col-date { width: 150px; color: var(--text-secondary); font-size: 13px; text-align: center; flex-shrink: 0; }
         
         /* 搜索框 */
         .search-box {
@@ -1554,18 +1563,19 @@
                         
                         <!-- 详细信息视图 -->
                         <div v-else-if="viewMode === 'details'" class="file-list">
-                            <div class="file-list-header" style="display:flex;padding:10px 15px;background:var(--bg-card);border-bottom:1px solid var(--border);font-weight:bold;color:var(--text-secondary);font-size:13px;">
-                                <span style="width:40px;"></span>
-                                <span style="flex:1;cursor:pointer;" @click="sortBy='name'; sortFiles()" :style="{color:sortBy==='name'?'var(--primary)':''}">
+                            <div class="file-list-header">
+                                <span class="col-check"></span>
+                                <span class="col-icon"></span>
+                                <span class="col-name" style="cursor:pointer;" @click="sortBy='name'; sortFiles()" :style="{color:sortBy==='name'?'var(--primary)':''}">
                                     名称 <i v-if="sortBy==='name'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
                                 </span>
-                                <span style="width:100px;text-align:center;cursor:pointer;" @click="sortBy='size'; sortFiles()" :style="{color:sortBy==='size'?'var(--primary)':''}">
+                                <span class="col-size" style="cursor:pointer;" @click="sortBy='size'; sortFiles()" :style="{color:sortBy==='size'?'var(--primary)':''}">
                                     大小 <i v-if="sortBy==='size'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
                                 </span>
-                                <span style="width:100px;text-align:center;cursor:pointer;" @click="sortBy='type'; sortFiles()" :style="{color:sortBy==='type'?'var(--primary)':''}">
+                                <span class="col-type" style="cursor:pointer;" @click="sortBy='type'; sortFiles()" :style="{color:sortBy==='type'?'var(--primary)':''}">
                                     类型 <i v-if="sortBy==='type'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
                                 </span>
-                                <span style="width:150px;text-align:center;cursor:pointer;" @click="sortBy='date'; sortFiles()" :style="{color:sortBy==='date'?'var(--primary)':''}">
+                                <span class="col-date" style="cursor:pointer;" @click="sortBy='date'; sortFiles()" :style="{color:sortBy==='date'?'var(--primary)':''}">
                                     修改日期 <i v-if="sortBy==='date'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
                                 </span>
                             </div>
@@ -1573,14 +1583,14 @@
                                  class="file-list-item" 
                                  :class="{ selected: selectedFiles.has(f.id) }"
                                  @click="handleFileClick(f)">
-                                <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
-                                <div class="file-icon" style="width:32px;font-size:20px;margin-right:12px;">
+                                <input type="checkbox" class="file-checkbox col-check" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
+                                <div class="col-icon">
                                     <i :class="getFileIcon(f)"></i>
                                 </div>
-                                <div class="file-name">{{ f.name }}</div>
-                                <div class="file-size">{{ f.is_folder ? '-' : formatSize(f.size) }}</div>
-                                <div class="file-type">{{ f.is_folder ? '文件夹' : (f.name.split('.').pop() || '文件') }}</div>
-                                <div class="file-date">{{ f.updated_at ? f.updated_at.substring(0, 16).replace('T', ' ') : '-' }}</div>
+                                <div class="col-name">{{ f.name }}</div>
+                                <div class="col-size">{{ f.is_folder ? '-' : formatSize(f.size) }}</div>
+                                <div class="col-type">{{ f.is_folder ? '文件夹' : (f.name.split('.').pop() || '文件') }}</div>
+                                <div class="col-date">{{ f.updated_at ? f.updated_at.substring(0, 16).replace('T', ' ') : '-' }}</div>
                             </div>
                         </div>
                     </div>
