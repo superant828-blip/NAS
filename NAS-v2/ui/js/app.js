@@ -382,6 +382,19 @@ createApp({
                 } else if (sortBy.value === 'size') {
                     va = a.size || 0;
                     vb = b.size || 0;
+                } else if (sortBy.value === 'type') {
+                    // 按类型排序：文件夹优先，然后按扩展名
+                    const getExt = (f) => {
+                        if (f.is_folder) return '0';
+                        const name = f.name || '';
+                        const idx = name.lastIndexOf('.');
+                        return idx > 0 ? name.substring(idx + 1).toLowerCase() : 'zzz';
+                    };
+                    va = getExt(a);
+                    vb = getExt(b);
+                } else if (sortBy.value === 'date') {
+                    va = a.updated_at || a.created_at || '';
+                    vb = b.updated_at || b.created_at || '';
                 } else {
                     va = a.updated_at || '';
                     vb = b.updated_at || '';
