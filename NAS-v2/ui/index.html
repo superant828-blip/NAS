@@ -1556,10 +1556,18 @@
                         <div v-else-if="viewMode === 'details'" class="file-list">
                             <div class="file-list-header" style="display:flex;padding:10px 15px;background:var(--bg-card);border-bottom:1px solid var(--border);font-weight:bold;color:var(--text-secondary);font-size:13px;">
                                 <span style="width:40px;"></span>
-                                <span style="flex:1;">名称</span>
-                                <span style="width:100px;text-align:center;">大小</span>
-                                <span style="width:100px;text-align:center;">类型</span>
-                                <span style="width:150px;text-align:center;">修改日期</span>
+                                <span style="flex:1;cursor:pointer;" @click="sortBy='name'; sortFiles()" :style="{color:sortBy==='name'?'var(--primary)':''}">
+                                    名称 <i v-if="sortBy==='name'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
+                                </span>
+                                <span style="width:100px;text-align:center;cursor:pointer;" @click="sortBy='size'; sortFiles()" :style="{color:sortBy==='size'?'var(--primary)':''}">
+                                    大小 <i v-if="sortBy==='size'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
+                                </span>
+                                <span style="width:100px;text-align:center;cursor:pointer;" @click="sortBy='type'; sortFiles()" :style="{color:sortBy==='type'?'var(--primary)':''}">
+                                    类型 <i v-if="sortBy==='type'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
+                                </span>
+                                <span style="width:150px;text-align:center;cursor:pointer;" @click="sortBy='date'; sortFiles()" :style="{color:sortBy==='date'?'var(--primary)':''}">
+                                    修改日期 <i v-if="sortBy==='date'" :class="sortOrder==='asc'?'bi bi-caret-up-fill':'bi bi-caret-down-fill'"></i>
+                                </span>
                             </div>
                             <div v-for="f in files" :key="f.id" 
                                  class="file-list-item" 
