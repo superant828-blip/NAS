@@ -1195,9 +1195,11 @@
                         const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token.value } });
                         if (res.ok) {
                             const data = await res.json();
+                            // 处理搜索结果格式 {files: [...]} 或直接数组
+                            let fileList = Array.isArray(data) ? data : (data.files || []);
                             // 检测图片文件
                             const imageExts = ['jpg','jpeg','png','gif','webp','bmp'];
-                            files.value = data.map(f => ({
+                            files.value = fileList.map(f => ({
                                 ...f,
                                 is_image: !f.is_folder && imageExts.includes((f.name || '').split('.').pop().toLowerCase())
                             }));

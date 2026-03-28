@@ -387,7 +387,14 @@ createApp({
                     return;
                 }
                 const data = await res.json();
-                files.value = Array.isArray(data) ? data : [];
+                // 处理搜索结果格式 {files: [...]} 或直接数组
+                if (Array.isArray(data)) {
+                    files.value = data;
+                } else if (data.files) {
+                    files.value = data.files;
+                } else {
+                    files.value = [];
+                }
                 sortFiles();
             } catch(e) {
                 console.error(e);
