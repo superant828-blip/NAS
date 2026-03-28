@@ -607,6 +607,10 @@ createApp({
                 showRenameModal.value = false;
                 renameForm.value = { id: null, name: '' };
                 loadFiles();
+                // 刷新移动对话框的文件夹列表
+                if (showMoveModal.value) {
+                    loadFolders();
+                }
             } else {
                 alert('重命名失败');
             }
