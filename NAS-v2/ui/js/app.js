@@ -782,7 +782,29 @@ createApp({
                 alert('请选择一个文件'); return;
             }
             const fileId = Array.from(selectedFiles.value)[0];
-            window.open(API_BASE + '/files/' + fileId + '/download', '_blank');
+            try {
+                const res = await fetch(API_BASE + '/files/' + fileId + '/download', {
+                    headers: { 'Authorization': 'Bearer ' + token.value }
+                });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const file = files.value.find(f => f.id === fileId);
+                    const fileName = file?.name || 'download';
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('下载失败');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('下载失败');
+            }
         };
         
         const createShareLinkFromModal = async () => {
