@@ -515,10 +515,17 @@ createApp({
                     
                     xhr.onload = () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
-                            uploadedSize += file.size;
-                            resolve();
-                        } else {
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                if (response.id || response.name) {
+                                    uploadedSize += file.size;
+                                    resolve();
+                                    return;
+                                }
+                            } catch(e) {}
                             reject(new Error('上传失败'));
+                        } else {
+                            reject(new Error('上传失败: ' + xhr.status));
                         }
                     };
                     xhr.onerror = () => reject(new Error('上传失败'));
