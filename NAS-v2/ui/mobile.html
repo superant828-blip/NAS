@@ -577,7 +577,7 @@
                         <div v-for="f in files" :key="f.id" class="file-item" :class="{ selected: selectedFiles.has(f.id) }">
                             <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
                             <div class="file-thumb" :class="{ folder: f.is_folder }" @click="handleFileClick(f)" v-if="f.is_image && !f.is_folder">
-                                <img :src="API + '/files/' + f.id + '/thumbnail?size=100&token=' + token" @error="f.is_image=false">
+                                <img :src="API + '/files/' + f.id + '/thumbnail?size=100'" @error="f.is_image=false">
                             </div>
                             <div class="file-icon" :class="{ folder: f.is_folder }" @click="handleFileClick(f)" v-else>
                                 <i :class="getFileIcon(f)"></i>
