@@ -1406,7 +1406,7 @@
                             <button class="toolbar-btn" @click="goHome" v-if="currentFolderId">
                                 <i class="bi bi-arrow-return-left"></i> 返回根目录
                             </button>
-                            <select class="form-select form-select-sm" style="width:100px;background:var(--bg-card);color:var(--text);border:1px solid var(--border)" v-model="sortBy" @change="sortFiles">
+                            <select class="form-select form-select-sm" style="width:100px;background:var(--bg-card);color:var(--text);border:1px solid var(--border)" v-model="sortBy" @change="sortFiles()">
                                 <option value="name">名称</option>
                                 <option value="size">大小</option>
                                 <option value="date">日期</option>

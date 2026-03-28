@@ -289,6 +289,10 @@ createApp({
             else if (page === 'monitor') loadEventLogs();
         });
         
+        // 监听排序变化
+        watch(sortBy, () => { sortFiles(); });
+        watch(sortOrder, () => { sortFiles(); });
+        
         // ========== 核心功能 ==========
         
         const loadData = () => { 
