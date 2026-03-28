@@ -47,6 +47,7 @@ createApp({
         // 表单
         const loginForm = ref({ email: '', password: '' });
         const profileForm = ref({ username: '', oldPassword: '', newPassword: '' });
+        const allowedExtensionsInput = ref('');
         const poolForm = ref({ name: '', vdevs: '', layout: 'basic' });
         const shareForm = ref({ 
             name: '', path: '', writable: true, guest_ok: false, 
@@ -299,6 +300,9 @@ createApp({
         
         const navigateTo = (page) => {
             currentPage.value = page;
+            if (page === 'profile') {
+                loadConfig();
+            }
         };
         
         // 登录/登出
@@ -1411,6 +1415,43 @@ createApp({
             }
         };
         
+        // 加载系统配置
+        const loadConfig = async () => {
+            if (currentUser.value?.role !== 'admin') return;
+            try {
+                const res = await fetch(API_BASE + '/config', {
+                    headers: { 'Authorization': 'Bearer ' + token.value }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    allowedExtensionsInput.value = (data.allowed_extensions || []).join(', ');
+                }
+            } catch(e) { console.error(e); }
+        };
+        
+        // 保存允许上传的文件类型配置
+        const saveAllowedExtensions = async () => {
+            if (currentUser.value?.role !== 'admin') return;
+            const extensions = allowedExtensionsInput.value.split(',').map(e => e.trim()).filter(e => e);
+            try {
+                const res = await fetch(API_BASE + '/config', {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': 'Bearer ' + token.value,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ allowed_extensions: extensions })
+                });
+                if (res.ok) {
+                    showToast('配置保存成功', 'success');
+                } else {
+                    showToast('配置保存失败', 'error');
+                }
+            } catch(e) {
+                showToast('配置保存失败', 'error');
+            }
+        };
+        
         // ========== 返回所有响应式数据和方法 ==========
         
         return {
@@ -1423,7 +1464,7 @@ createApp({
             jobs, jobsLoading, searchQuery, systemStatus,
             
             // 表单
-            loginForm, profileForm, poolForm, shareForm, snapshotForm, userForm, 
+            loginForm, profileForm, allowedExtensionsInput, poolForm, shareForm, snapshotForm, userForm, 
             newFolderName, createLinkForm, renameForm,
             
             // 模态框
@@ -1464,7 +1505,7 @@ createApp({
             loadAlbums, handlePhotoUpload, createAlbum, viewAlbum,
             
             // 用户
-            loadUsers, createUser, deleteUser, updateProfile, changePassword,
+            loadUsers, createUser, deleteUser, updateProfile, changePassword, loadConfig, saveAllowedExtensions,
             
             // 任务
             loadJobs, cancelJob, getJobTypeIcon, getJobStatusClass, getJobStatusText,

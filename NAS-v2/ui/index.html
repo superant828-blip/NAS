@@ -1894,6 +1894,13 @@
                                 </div>
                                 <button class="toolbar-btn" style="background:var(--warning);border-color:var(--warning);color:#000" @click="changePassword">修改密码</button>
                             </div>
+                            
+                            <!-- 允许上传的文件类型 -->
+                            <div class="card mt-3" v-if="currentUser.role === 'admin'">
+                                <h6 class="mb-3">允许上传的文件类型</h6>
+                                <textarea class="form-control" v-model="allowedExtensionsInput" rows="3" placeholder="用逗号分隔扩展名，如: jpg,png,zip,iso"></textarea>
+                                <button class="toolbar-btn mt-2" style="background:var(--success);border-color:var(--success)" @click="saveAllowedExtensions">保存配置</button>
+                            </div>
                         </div>
                     </div>
                 </div>

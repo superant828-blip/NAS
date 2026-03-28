@@ -57,6 +57,27 @@ for subdir in ['files', 'photos', 'thumbs']:
 
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'pdf', 'doc', 'docx', 'zip', 'rar', 'txt', 'mp3', 'wav', 'apk', 'exe', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'html', 'css', 'js', 'svg', 'ico', 'bmp', 'tiff', 'flac', 'aac', 'ogg', 'wma', 'mov', 'avi', 'mkv', 'wmv', 'flv', '7z', 'tar', 'gz', 'bz2', 'iso', 'dmg', 'img', 'bin'}
 
+# ==================== 系统配置 ====================
+import json
+
+def load_app_config():
+    """加载应用配置"""
+    config_file = ROOT / "data" / "app_config.json"
+    if config_file.exists():
+        return json.loads(config_file.read_text())
+    return {"allowed_extensions": list(ALLOWED_EXTENSIONS)}
+
+def save_app_config(config_data):
+    """保存应用配置"""
+    config_file = ROOT / "data" / "app_config.json"
+    config_file.write_text(json.dumps(config_data, ensure_ascii=False, indent=2))
+
+APP_CONFIG = load_app_config()
+
+# 如果配置中有自定义扩展名，使用配置的扩展名
+if APP_CONFIG.get("allowed_extensions"):
+    ALLOWED_EXTENSIONS = set(APP_CONFIG["allowed_extensions"])
+
 # ==================== 数据库初始化 ====================
 def init_file_db():
     """初始化文件管理数据库（带索引优化）"""
@@ -2159,6 +2180,29 @@ async def get_system_status(current_user: User = Depends(get_current_user)):
         "users": len(auth_manager.list_users())
     }
 
+
+# ==================== 系统配置 ====================
+
+@app.get("/api/v1/config")
+async def get_config(current_user: User = Depends(get_current_user)):
+    """获取系统配置"""
+    return {
+        "allowed_extensions": sorted(list(ALLOWED_EXTENSIONS))
+    }
+
+@app.put("/api/v1/config")
+async def update_config(request: Request, current_user: User = Depends(require_admin)):
+    """更新系统配置（仅管理员）"""
+    data = await request.json()
+    
+    global ALLOWED_EXTENSIONS
+    if "allowed_extensions" in data:
+        allowed = [ext.strip().lower() for ext in data["allowed_extensions"] if ext.strip()]
+        ALLOWED_EXTENSIONS = set(allowed)
+        APP_CONFIG["allowed_extensions"] = allowed
+        save_app_config(APP_CONFIG)
+    
+    return {"success": True, "allowed_extensions": sorted(list(ALLOWED_EXTENSIONS))}
 
 # ==================== 缓存管理 ====================
 
