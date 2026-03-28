@@ -706,7 +706,7 @@
                 
                 <!-- 用户 -->
                 <div v-show="currentPage === 'users'">
-                    <div v-if="currentUser.role !== 'admin'" class="empty-state">
+                    <div v-if="currentUser?.role !== 'admin'" class="empty-state">
                         <i class="bi bi-shield-exclamation"></i>
                         <p>需要管理员权限</p>
                     </div>
@@ -739,7 +739,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">邮箱</label>
-                            <input type="email" class="form-control" :value="currentUser.email" disabled>
+                            <input type="email" class="form-control" :value="currentUser?.email" disabled>
                         </div>
                         <button class="btn btn-primary" @click="updateProfile">保存</button>
                     </div>
@@ -1617,7 +1617,7 @@
                     handleLogin, logout, loadData, loadPools, loadDatasets, loadFiles,
                     getFileIcon, formatSize, handleFileClick, goParent, createFolder, triggerUpload, handleUpload,
                     triggerPhotoUpload, handlePhotoUpload, createAlbum, viewAlbum, currentAlbumId, currentAlbumPhotos, goBackToAlbums, previewPhoto, getPhotoUrl,
-                    createSnapshot, deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, 
+                    deleteSnapshot, createUser, updateProfile, changePassword, searchFiles, 
                     selectedFiles, toggleSelect, downloadFile, showRenameDialog, doRename, showMoveDialog, doMove, confirmDelete,
                     clearSelection, deleteSelected, downloadSelected, showMoveAllDialog, moveFormAll, showMoveAll, doMoveAll,
                     loadTrash, restoreTrash, permanentDelete, emptyTrash
