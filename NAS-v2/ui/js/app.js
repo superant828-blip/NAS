@@ -466,6 +466,9 @@ createApp({
             uploadProgress.value = 0;
             const totalSize = files.reduce((sum, f) => sum + f.size, 0);
             let uploadedSize = 0;
+            const startTime = Date.now();
+            let lastLoaded = 0;
+            let speedSamples = [];
             
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -477,6 +480,7 @@ createApp({
                 
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
+                    const fileStartTime = Date.now();
                     xhr.open('POST', API_BASE + '/files/upload');
                     xhr.setRequestHeader('Authorization', 'Bearer ' + token.value);
                     
@@ -487,19 +491,22 @@ createApp({
                             const allProgress = ((uploadedSize + currentFileSize) / totalSize) * 100;
                             uploadProgress.value = Math.round(allProgress);
                             
-                            // 计算预计剩余时间
-                            if (event.total > 0 && event.loaded > 0) {
-                                const speed = event.loaded / (event.timeStamp || 1);
-                                const remaining = (event.total - event.loaded) / (speed || 1);
-                                const remainingSec = Math.round(remaining);
-                                if (remainingSec > 0) {
-                                    const hours = Math.floor(remainingSec / 3600);
-                                    const mins = Math.floor((remainingSec % 3600) / 60);
+                            // 计算平均速度（使用最近3秒的数据）
+                            const now = Date.now();
+                            const elapsed = (now - fileStartTime) / 1000;
+                            if (elapsed > 0.5) {
+                                const currentSpeed = event.loaded / elapsed;
+                                speedSamples.push(currentSpeed);
+                                if (speedSamples.length > 5) speedSamples.shift();
+                                const avgSpeed = speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length;
+                                
+                                const remaining = event.total - event.loaded;
+                                const remainingSec = avgSpeed > 0 ? Math.round(remaining / avgSpeed) : 0;
+                                
+                                if (remainingSec > 0 && remainingSec < 3600) {
+                                    const mins = Math.floor(remainingSec / 60);
                                     const secs = remainingSec % 60;
-                                    let timeStr = '';
-                                    if (hours > 0) timeStr = `${hours}时${mins}分${secs}秒`;
-                                    else if (mins > 0) timeStr = `${mins}分${secs}秒`;
-                                    else timeStr = `${secs}秒`;
+                                    let timeStr = mins > 0 ? `${mins}分${secs}秒` : `${secs}秒`;
                                     uploadStatus.value = `${file.name} - ${Math.round(fileProgress)}% 预计${timeStr}`;
                                 }
                             }
