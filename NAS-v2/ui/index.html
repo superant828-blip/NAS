@@ -283,6 +283,12 @@
             border-color: var(--primary-dark);
         }
         
+        /* 排序按钮组 */
+        .sort-btns {
+            display: flex;
+            gap: 2px;
+        }
+        
         /* 搜索框 */
         .search-box {
             position: relative;
@@ -1406,12 +1412,12 @@
                             <button class="toolbar-btn" @click="goHome" v-if="currentFolderId">
                                 <i class="bi bi-arrow-return-left"></i> 返回根目录
                             </button>
-                            <select class="form-select form-select-sm" style="width:100px;background:var(--bg-card);color:var(--text);border:1px solid var(--border)" v-model="sortBy" @change="sortFiles()">
-                                <option value="name">名称</option>
-                                <option value="size">大小</option>
-                                <option value="date">日期</option>
-                                <option value="type">类型</option>
-                            </select>
+                            <div class="sort-btns">
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': sortBy === 'name' }" @click="sortBy = 'name'; sortFiles()">名称</button>
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': sortBy === 'date' }" @click="sortBy = 'date'; sortFiles()">日期</button>
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': sortBy === 'size' }" @click="sortBy = 'size'; sortFiles()">大小</button>
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': sortBy === 'type' }" @click="sortBy = 'type'; sortFiles()">类型</button>
+                            </div>
                             <button class="toolbar-btn" @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; sortFiles()" :title="sortOrder === 'asc' ? '升序' : '降序'">
                                 <i :class="sortOrder === 'asc' ? 'bi bi-sort-up' : 'bi bi-sort-down'"></i>
                             </button>
