@@ -662,7 +662,7 @@
                                     <i class="bi bi-camera text-warning"></i>
                                     <span class="ms-2">{{ share.name }}</span>
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger" @click="deleteSnapshot(share.name)">
+                                <button class="btn btn-sm btn-outline-danger" @click="deleteSnapshot(share.id)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
@@ -1106,7 +1106,7 @@
                 
                 const loadShareLinks = async () => {
                     try {
-                        const res = await fetch(API + '/shareLinks', { headers: { 'Authorization': 'Bearer ' + token.value } });
+                        const res = await fetch(API + '/shares/links', { headers: { 'Authorization': 'Bearer ' + token.value } });
                         if (res.ok) shareLinks.value = await res.json();
                     } catch(e) { console.error(e); }
                 };
@@ -1550,10 +1550,10 @@
                     }
                 };
                 
-                const deleteSnapshot = async (name) => {
+                const deleteSnapshot = async (id) => {
                     if (!confirm('确定删除?')) return;
                     try {
-                        await fetch(API + '/shareLinks/' + name, {
+                        await fetch(API + '/shares/' + id, {
                             method: 'DELETE',
                             headers: { 'Authorization': 'Bearer ' + token.value }
                         });
