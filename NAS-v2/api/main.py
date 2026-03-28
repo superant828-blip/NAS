@@ -50,7 +50,7 @@ from share.snapshot import snapshot_manager, ZFSSnapshot
 from security.auth import auth_manager, User
 
 # ==================== 上传配置 ====================
-UPLOAD_DIR = Path("/home/test/.openclaw/workspace/NAS-v2/uploads")
+UPLOAD_DIR = Path("/nas-pool/data/uploads")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 for subdir in ['files', 'photos', 'thumbs']:
     (UPLOAD_DIR / subdir).mkdir(exist_ok=True)
