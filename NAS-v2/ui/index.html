@@ -1968,7 +1968,7 @@
                                      :class="{ selected: moveForm.targetFolderId === folder.id }"
                                      @click="moveForm.targetFolderId = folder.id">
                                     <i class="bi bi-folder-fill" style="color:#ffc107"></i>
-                                    <span>{{ folder.full_path || folder.name }}</span>
+                                    <span>{{ folder.name }} ({{ folder.full_path }})</span>
                                 </div>
                             </div>
                         </div>
