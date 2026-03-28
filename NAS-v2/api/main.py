@@ -968,11 +968,20 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
         )
         file = cursor.fetchone()
         if not file:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File not found in database")
         
+        # 尝试多个可能的路径
         file_path = UPLOAD_DIR / file['path']
+        
+        # 如果新路径不存在，尝试旧路径
         if not file_path.exists():
-            raise HTTPException(status_code=404, detail="File not found on disk")
+            old_path = ROOT / "uploads" / file['path']
+            if old_path.exists():
+                file_path = old_path
+        
+        if not file_path.exists():
+            # 返回更详细的错误信息
+            raise HTTPException(status_code=404, detail=f"File not found on disk: {file['path']}")
         
         return FileResponse(
             path=str(file_path),
