@@ -1461,8 +1461,12 @@
                             };
                             
                             xhr.onload = () => {
-                                uploadedSize += file.size;
-                                resolve();
+                                if (xhr.status >= 200 && xhr.status < 300) {
+                                    uploadedSize += file.size;
+                                    resolve();
+                                } else {
+                                    reject(new Error('上传失败: ' + (xhr.responseText || 'Server error')));
+                                }
                             };
                             xhr.onerror = () => reject(new Error('上传失败'));
                             xhr.send(formData);
