@@ -518,6 +518,7 @@ createApp({
                     };
                     
                     xhr.onload = () => {
+                        console.log('Upload response:', xhr.status, xhr.responseText);
                         if (xhr.status >= 200 && xhr.status < 300) {
                             try {
                                 const response = JSON.parse(xhr.responseText);
@@ -527,9 +528,9 @@ createApp({
                                     return;
                                 }
                             } catch(e) {}
-                            reject(new Error('上传失败'));
+                            reject(new Error('上传失败: ' + xhr.responseText));
                         } else {
-                            reject(new Error('上传失败: ' + xhr.status));
+                            reject(new Error('上传失败: ' + xhr.status + ' - ' + xhr.responseText));
                         }
                     };
                     xhr.onerror = () => reject(new Error('上传失败'));
