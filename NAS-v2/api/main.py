@@ -1930,7 +1930,25 @@ async def get_stats(current_user: User = Depends(get_current_user)):
 async def list_pools(current_user: User = Depends(get_current_user)):
     """列出所有 ZFS 池"""
     pools = zfs_manager.list_pools()
-    return [asdict(p) for p in pools]
+    result = []
+    for p in pools:
+        pool_dict = {
+            'name': p.name,
+            'size': p.size,
+            'allocated': p.allocated,
+            'free': p.free,
+            'cap': p.cap,
+            'health': p.health,
+            'altroot': p.altroot,
+            'autotrim': p.autotrim,
+        }
+        # 添加usage_percent字段
+        try:
+            pool_dict['usage_percent'] = int(p.cap.rstrip('%')) if p.cap else 0
+        except:
+            pool_dict['usage_percent'] = 0
+        result.append(pool_dict)
+    return result
 
 
 @app.post("/api/v1/storage/pools")
