@@ -507,7 +507,11 @@ createApp({
                                     const mins = Math.floor(remainingSec / 60);
                                     const secs = remainingSec % 60;
                                     let timeStr = mins > 0 ? `${mins}分${secs}秒` : `${secs}秒`;
-                                    uploadStatus.value = `${file.name} - ${Math.round(fileProgress)}% 预计${timeStr}`;
+                                    const speedMB = (avgSpeed / 1024 / 1024).toFixed(1);
+                                    uploadStatus.value = `${file.name} - ${Math.round(fileProgress)}% ${speedMB}MB/s 预计${timeStr}`;
+                                } else {
+                                    const speedMB = (avgSpeed / 1024 / 1024).toFixed(1);
+                                    uploadStatus.value = `${file.name} - ${Math.round(fileProgress)}% ${speedMB}MB/s`;
                                 }
                             }
                         }
