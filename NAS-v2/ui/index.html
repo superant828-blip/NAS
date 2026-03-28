@@ -2258,8 +2258,13 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">访问用户名</label>
-                            <input type="text" class="form-control" v-model="shareForm.username" placeholder="访问用户名">
+                            <label class="form-label">访问用户</label>
+                            <select class="form-control" v-model="shareForm.username">
+                                <option value="">-- 选择用户 --</option>
+                                <option v-for="user in users" :key="user.id" :value="user.username">
+                                    {{ user.username }} ({{ user.role }})
+                                </option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">访问密码</label>
@@ -2305,8 +2310,13 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">访问用户名</label>
-                            <input type="text" class="form-control" v-model="shareForm.username" placeholder="访问用户名">
+                            <label class="form-label">访问用户</label>
+                            <select class="form-control" v-model="shareForm.username">
+                                <option value="">-- 选择用户 --</option>
+                                <option v-for="user in users" :key="user.id" :value="user.username">
+                                    {{ user.username }} ({{ user.role }})
+                                </option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">访问密码</label>
