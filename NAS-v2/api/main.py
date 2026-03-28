@@ -707,12 +707,15 @@ async def upload_file(
     current_user: User = Depends(get_current_user)
 ):
     """上传文件"""
+    logger.info(f"Upload request: filename={file.filename}")
     # 验证文件类型
     ext = ""
     if "." in file.filename:
         ext = file.filename.rsplit(".", 1)[1].lower()
     
+    logger.info(f"File ext: {ext}, allowed: {ext in ALLOWED_EXTENSIONS}")
     if ext and ext not in ALLOWED_EXTENSIONS:
+        logger.warning(f"File type not allowed: {ext}")
         raise HTTPException(status_code=400, detail="File type not allowed")
     
     # 验证文件名
