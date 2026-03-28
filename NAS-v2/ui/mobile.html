@@ -1418,8 +1418,9 @@
                 const triggerUpload = () => document.getElementById('uploadInput').click();
                 
                 const handleUpload = async (e) => {
-                    const files = e.target.files;
-                    if (!files.length) return;
+                    const fileList = e.target.files;
+                    if (!fileList || !fileList.length) return;
+                    const files = Array.from(fileList);
                     
                     uploadProgress.value = 0;
                     const totalSize = files.reduce((sum, f) => sum + f.size, 0);
