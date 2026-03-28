@@ -1476,7 +1476,12 @@
                     showToast('上传完成');
                     setTimeout(() => { uploadProgress.value = 0; uploadStatus.value = ''; }, 2000);
                     loadFiles();
-                };
+                } catch(e) {
+                    showToast('上传失败: ' + (e.message || '未知错误'), 'error');
+                    console.error('Upload error:', e);
+                    uploadProgress.value = 0;
+                    uploadStatus.value = '';
+                }
                 
                 // 相册
                 const triggerPhotoUpload = () => document.getElementById('photoUpload').click();
