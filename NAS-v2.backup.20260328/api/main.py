@@ -50,33 +50,12 @@ from share.snapshot import snapshot_manager, ZFSSnapshot
 from security.auth import auth_manager, User
 
 # ==================== 上传配置 ====================
-UPLOAD_DIR = Path("/nas-pool/data/uploads")
+UPLOAD_DIR = Path("/home/test/.openclaw/workspace/NAS-v2/uploads")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 for subdir in ['files', 'photos', 'thumbs']:
     (UPLOAD_DIR / subdir).mkdir(exist_ok=True)
 
-ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'pdf', 'doc', 'docx', 'zip', 'rar', 'txt', 'mp3', 'wav', 'apk', 'exe', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'html', 'css', 'js', 'svg', 'ico', 'bmp', 'tiff', 'flac', 'aac', 'ogg', 'wma', 'mov', 'avi', 'mkv', 'wmv', 'flv', '7z', 'tar', 'gz', 'bz2', 'iso', 'dmg', 'img', 'bin'}
-
-# ==================== 系统配置 ====================
-import json
-
-def load_app_config():
-    """加载应用配置"""
-    config_file = ROOT / "data" / "app_config.json"
-    if config_file.exists():
-        return json.loads(config_file.read_text())
-    return {"allowed_extensions": list(ALLOWED_EXTENSIONS)}
-
-def save_app_config(config_data):
-    """保存应用配置"""
-    config_file = ROOT / "data" / "app_config.json"
-    config_file.write_text(json.dumps(config_data, ensure_ascii=False, indent=2))
-
-APP_CONFIG = load_app_config()
-
-# 如果配置中有自定义扩展名，使用配置的扩展名
-if APP_CONFIG.get("allowed_extensions"):
-    ALLOWED_EXTENSIONS = set(APP_CONFIG["allowed_extensions"])
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'pdf', 'doc', 'docx', 'zip', 'rar', 'txt', 'mp3', 'wav'}
 
 # ==================== 数据库初始化 ====================
 def init_file_db():
@@ -728,15 +707,12 @@ async def upload_file(
     current_user: User = Depends(get_current_user)
 ):
     """上传文件"""
-    logger.info(f"Upload request: filename={file.filename}")
     # 验证文件类型
     ext = ""
     if "." in file.filename:
         ext = file.filename.rsplit(".", 1)[1].lower()
     
-    logger.info(f"File ext: {ext}, allowed: {ext in ALLOWED_EXTENSIONS}")
     if ext and ext not in ALLOWED_EXTENSIONS:
-        logger.warning(f"File type not allowed: {ext}")
         raise HTTPException(status_code=400, detail="File type not allowed")
     
     # 验证文件名
@@ -962,77 +938,17 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
     """下载文件"""
     conn = get_file_db()
     try:
-        # 管理员可以下载任何文件，普通用户只能下载自己的文件
-        if current_user.role == 'admin':
-            cursor = conn.execute(
-                "SELECT * FROM files WHERE id = ? AND is_folder = 0 AND status = 1",
-                (file_id,)
-            )
-        else:
-            cursor = conn.execute(
-                "SELECT * FROM files WHERE id = ? AND user_id = ? AND is_folder = 0 AND status = 1",
-                (file_id, current_user.id)
-            )
+        cursor = conn.execute(
+            "SELECT * FROM files WHERE id = ? AND user_id = ? AND is_folder = 0 AND status = 1",
+            (file_id, current_user.id)
+        )
         file = cursor.fetchone()
         if not file:
-            raise HTTPException(status_code=404, detail="File not found in database")
+            raise HTTPException(status_code=404, detail="File not found")
         
-        # 转换为字典以便安全访问
-        file_dict = dict(file)
-        file_name = file_dict.get('name', '')
-        file_path = None
-        
-        # 尝试多个可能的路径
-        file_size = file_dict.get('size', 0)
-        
-        # 方法1: 优先使用path字段（这是实际存储路径）
-        path_val = file_dict.get('path', '')
-        if path_val:
-            path_val = path_val.lstrip('/')
-            file_path = UPLOAD_DIR / path_val
-            if not file_path.exists():
-                file_path = ROOT / "uploads" / path_val
-        
-        # 方法2: 如果方法1失败，尝试使用full_path
-        if not file_path or not file_path.exists():
-            full_path = file_dict.get('full_path', '')
-            if full_path:
-                full = full_path.lstrip('/')
-                if '/' in full:
-                    file_path = UPLOAD_DIR / full
-                    if not file_path.exists():
-                        file_path = ROOT / "uploads" / full
-        
-        # 方法3: 如果以上都失败，根据文件名搜索
-        if not file_path or not file_path.exists():
-            for search_dir in [UPLOAD_DIR, ROOT / "uploads"]:
-                if search_dir.exists():
-                    for root, dirs, files in os.walk(search_dir):
-                        if file_name in files:
-                            file_path = Path(root) / file_name
-                            break
-                if file_path and file_path.exists():
-                    break
-        
-        # 方法4: 如果按文件名没找到，按文件大小搜索
-        if not file_path or not file_path.exists():
-            for search_dir in [UPLOAD_DIR, ROOT / "uploads"]:
-                if search_dir.exists():
-                    for root, dirs, files in os.walk(search_dir):
-                        for f in files:
-                            fp = Path(root) / f
-                            try:
-                                if fp.stat().st_size == file_size:
-                                    file_path = fp
-                                    break
-                            except:
-                                pass
-                if file_path and file_path.exists():
-                    break
-        
+        file_path = UPLOAD_DIR / file['path']
         if not file_path.exists():
-            # 返回更详细的错误信息
-            raise HTTPException(status_code=404, detail=f"File not found on disk: {file['path']}")
+            raise HTTPException(status_code=404, detail="File not found on disk")
         
         return FileResponse(
             path=str(file_path),
@@ -1990,25 +1906,7 @@ async def get_stats(current_user: User = Depends(get_current_user)):
 async def list_pools(current_user: User = Depends(get_current_user)):
     """列出所有 ZFS 池"""
     pools = zfs_manager.list_pools()
-    result = []
-    for p in pools:
-        pool_dict = {
-            'name': p.name,
-            'size': p.size,
-            'allocated': p.allocated,
-            'free': p.free,
-            'cap': p.cap,
-            'health': p.health,
-            'altroot': p.altroot,
-            'autotrim': p.autotrim,
-        }
-        # 添加usage_percent字段
-        try:
-            pool_dict['usage_percent'] = int(p.cap.rstrip('%')) if p.cap else 0
-        except:
-            pool_dict['usage_percent'] = 0
-        result.append(pool_dict)
-    return result
+    return [asdict(p) for p in pools]
 
 
 @app.post("/api/v1/storage/pools")
@@ -2258,29 +2156,6 @@ async def get_system_status(current_user: User = Depends(get_current_user)):
         "users": len(auth_manager.list_users())
     }
 
-
-# ==================== 系统配置 ====================
-
-@app.get("/api/v1/config")
-async def get_config(current_user: User = Depends(get_current_user)):
-    """获取系统配置"""
-    return {
-        "allowed_extensions": sorted(list(ALLOWED_EXTENSIONS))
-    }
-
-@app.put("/api/v1/config")
-async def update_config(request: Request, current_user: User = Depends(require_admin)):
-    """更新系统配置（仅管理员）"""
-    data = await request.json()
-    
-    global ALLOWED_EXTENSIONS
-    if "allowed_extensions" in data:
-        allowed = [ext.strip().lower() for ext in data["allowed_extensions"] if ext.strip()]
-        ALLOWED_EXTENSIONS = set(allowed)
-        APP_CONFIG["allowed_extensions"] = allowed
-        save_app_config(APP_CONFIG)
-    
-    return {"success": True, "allowed_extensions": sorted(list(ALLOWED_EXTENSIONS))}
 
 # ==================== 缓存管理 ====================
 
