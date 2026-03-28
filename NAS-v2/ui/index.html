@@ -289,6 +289,67 @@
             gap: 2px;
         }
         
+        /* 视图切换按钮 */
+        .view-btns {
+            display: flex;
+            gap: 2px;
+            margin-left: 8px;
+        }
+        
+        /* 文件列表视图 */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .file-list-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .file-list-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--primary);
+        }
+        
+        .file-list-item.selected {
+            background: rgba(0, 145, 234, 0.2);
+            border-color: var(--primary);
+        }
+        
+        .file-list-item .file-icon {
+            width: 32px;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+        
+        .file-list-item .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-list-item .file-size,
+        .file-list-item .file-date,
+        .file-list-item .file-type {
+            width: 100px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        .file-list-item .file-type {
+            width: 80px;
+        }
+        
         /* 搜索框 */
         .search-box {
             position: relative;
@@ -1421,6 +1482,18 @@
                             <button class="toolbar-btn" @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'; sortFiles()" :title="sortOrder === 'asc' ? '升序' : '降序'">
                                 <i :class="sortOrder === 'asc' ? 'bi bi-sort-up' : 'bi bi-sort-down'"></i>
                             </button>
+                            <!-- 视图切换 -->
+                            <div class="view-btns">
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': viewMode === 'grid' }" @click="viewMode = 'grid'" title="大图标">
+                                    <i class="bi bi-grid-3x3-gap"></i>
+                                </button>
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': viewMode === 'list' }" @click="viewMode = 'list'" title="中等图标">
+                                    <i class="bi bi-grid-3x3"></i>
+                                </button>
+                                <button class="toolbar-btn" :class="{ 'toolbar-btn-primary': viewMode === 'details' }" @click="viewMode = 'details'" title="详细信息">
+                                    <i class="bi bi-list-ul"></i>
+                                </button>
+                            </div>
                             <div class="search-box">
                                 <i class="bi bi-search"></i>
                                 <input type="text" v-model="searchQuery" placeholder="搜索文件..." @keyup.enter="searchFiles">
@@ -1450,7 +1523,8 @@
                                 </button>
                             </div>
                         </div>
-                        <div v-else class="file-grid">
+                        <!-- 大图标视图 -->
+                        <div v-else-if="viewMode === 'grid'" class="file-grid">
                             <div v-for="f in files" :key="f.id" 
                                  class="file-card" 
                                  :class="{ selected: selectedFiles.has(f.id) }"
@@ -1461,6 +1535,44 @@
                                 </div>
                                 <div class="file-name">{{ f.name }}</div>
                                 <div class="file-size">{{ f.is_folder ? '文件夹' : formatSize(f.size) }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 列表视图 -->
+                        <div v-else-if="viewMode === 'list'" class="file-grid" style="grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));">
+                            <div v-for="f in files" :key="f.id" 
+                                 class="file-card" 
+                                 :class="{ selected: selectedFiles.has(f.id) }"
+                                 @click="handleFileClick(f)">
+                                <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
+                                <div class="file-icon" :class="{ folder: f.is_folder }" style="font-size:28px;">
+                                    <i :class="getFileIcon(f)"></i>
+                                </div>
+                                <div class="file-name" style="font-size:12px;">{{ f.name }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 详细信息视图 -->
+                        <div v-else-if="viewMode === 'details'" class="file-list">
+                            <div class="file-list-header" style="display:flex;padding:10px 15px;background:var(--bg-card);border-bottom:1px solid var(--border);font-weight:bold;color:var(--text-secondary);font-size:13px;">
+                                <span style="width:40px;"></span>
+                                <span style="flex:1;">名称</span>
+                                <span style="width:100px;text-align:center;">大小</span>
+                                <span style="width:100px;text-align:center;">类型</span>
+                                <span style="width:150px;text-align:center;">修改日期</span>
+                            </div>
+                            <div v-for="f in files" :key="f.id" 
+                                 class="file-list-item" 
+                                 :class="{ selected: selectedFiles.has(f.id) }"
+                                 @click="handleFileClick(f)">
+                                <input type="checkbox" class="file-checkbox" :checked="selectedFiles.has(f.id)" @click.stop="toggleSelect(f.id)">
+                                <div class="file-icon" style="width:32px;font-size:20px;margin-right:12px;">
+                                    <i :class="getFileIcon(f)"></i>
+                                </div>
+                                <div class="file-name">{{ f.name }}</div>
+                                <div class="file-size">{{ f.is_folder ? '-' : formatSize(f.size) }}</div>
+                                <div class="file-type">{{ f.is_folder ? '文件夹' : (f.name.split('.').pop() || '文件') }}</div>
+                                <div class="file-date">{{ f.updated_at ? f.updated_at.substring(0, 16).replace('T', ' ') : '-' }}</div>
                             </div>
                         </div>
                     </div>

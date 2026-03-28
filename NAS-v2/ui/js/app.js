@@ -42,6 +42,7 @@ createApp({
         const searchQuery = ref('');
         const sortBy = ref('name');
         const sortOrder = ref('asc');
+        const viewMode = ref('grid'); // grid, list, details
         const systemStatus = ref({ pools: 0, shares: 0, links: 0, users: 0, snapshots: 0 });
         
         // 表单
@@ -1533,7 +1534,7 @@ createApp({
             
             // 文件操作
             loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, 
-            formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles, sortFiles,
+            formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles, sortFiles, viewMode,
             handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, uploadProgress, uploadStatus, 
             renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected,
             
