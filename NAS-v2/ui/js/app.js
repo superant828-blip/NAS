@@ -22,6 +22,10 @@ createApp({
         const sidebarShow = ref(false);
         const btnLoading = ref({});
         
+        // 上传进度
+        const uploadProgress = ref(0);
+        const uploadStatus = ref('');
+        
         // 数据
         const pools = ref([]);
         const datasets = ref([]);
@@ -455,25 +459,70 @@ createApp({
         };
         
         const handleUpload = async (e) => {
-            if (e.target.files.length === 0) return;
-            setBtnLoading('upload', true);
-            try {
-                for (let file of e.target.files) {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    if (currentFolderId.value) formData.append('parent_id', currentFolderId.value);
-                    await fetch(API_BASE + '/files/upload', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + token.value },
-                        body: formData
-                    });
-                }
-                showToast('上传成功', 'success');
-                loadFiles();
-            } catch(e) {
-                showToast('上传失败', 'error');
+            const fileList = e.target.files;
+            if (!fileList || fileList.length === 0) return;
+            const files = Array.from(fileList);
+            
+            uploadProgress.value = 0;
+            const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+            let uploadedSize = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const formData = new FormData();
+                formData.append('file', file);
+                if (currentFolderId.value) formData.append('parent_id', currentFolderId.value);
+                
+                uploadStatus.value = `正在上传 ${i+1}/${files.length}: ${file.name}`;
+                
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', API_BASE + '/files/upload');
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token.value);
+                    
+                    xhr.upload.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            const fileProgress = (event.loaded / event.total) * 100;
+                            const currentFileSize = event.loaded;
+                            const allProgress = ((uploadedSize + currentFileSize) / totalSize) * 100;
+                            uploadProgress.value = Math.round(allProgress);
+                            
+                            // 计算预计剩余时间
+                            if (event.total > 0 && event.loaded > 0) {
+                                const speed = event.loaded / (event.timeStamp || 1);
+                                const remaining = (event.total - event.loaded) / (speed || 1);
+                                const remainingSec = Math.round(remaining);
+                                if (remainingSec > 0) {
+                                    const hours = Math.floor(remainingSec / 3600);
+                                    const mins = Math.floor((remainingSec % 3600) / 60);
+                                    const secs = remainingSec % 60;
+                                    let timeStr = '';
+                                    if (hours > 0) timeStr = `${hours}时${mins}分${secs}秒`;
+                                    else if (mins > 0) timeStr = `${mins}分${secs}秒`;
+                                    else timeStr = `${secs}秒`;
+                                    uploadStatus.value = `${file.name} - ${Math.round(fileProgress)}% 预计${timeStr}`;
+                                }
+                            }
+                        }
+                    };
+                    
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            uploadedSize += file.size;
+                            resolve();
+                        } else {
+                            reject(new Error('上传失败'));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error('上传失败'));
+                    xhr.send(formData);
+                });
             }
-            setBtnLoading('upload', false);
+            
+            uploadStatus.value = '上传完成';
+            showToast('上传成功', 'success');
+            setTimeout(() => { uploadProgress.value = 0; uploadStatus.value = ''; }, 2000);
+            loadFiles();
             e.target.value = '';
         };
         
@@ -1404,7 +1453,7 @@ createApp({
             // 文件操作
             loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, 
             formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles, sortFiles,
-            handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, 
+            handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, uploadProgress, uploadStatus, 
             renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected,
             
             // 系统监控

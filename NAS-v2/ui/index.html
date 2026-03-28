@@ -1374,9 +1374,17 @@
                         </div>
                         <div class="toolbar">
                             <input type="file" id="uploadInput" style="display:none" multiple @change="handleUpload">
-                            <button class="toolbar-btn toolbar-btn-primary" :class="{ 'btn-loading': btnLoading.upload }" @click="triggerUpload">
+                            <button class="toolbar-btn toolbar-btn-primary" :disabled="uploadProgress > 0" @click="triggerUpload">
                                 <i class="bi bi-cloud-upload"></i> 上传文件
                             </button>
+                            
+                            <!-- 上传进度条 -->
+                            <div v-if="uploadProgress > 0" class="upload-progress">
+                                <div class="progress" style="height:6px;margin-bottom:4px;">
+                                    <div class="progress-bar" :style="{width: uploadProgress + '%'}"></div>
+                                </div>
+                                <small class="text-secondary">{{ uploadStatus }}</small>
+                            </div>
                             <button class="toolbar-btn" @click="showFolderModal = true">
                                 <i class="bi bi-folder-plus"></i> 新建文件夹
                             </button>
