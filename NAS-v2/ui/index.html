@@ -2249,8 +2249,21 @@
                             <input type="text" class="form-control" v-model="shareForm.name" placeholder="如: shared">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">路径</label>
-                            <input type="text" class="form-control" v-model="shareForm.path" placeholder="如: /mnt/tank/data/shared">
+                            <label class="form-label">选择目录</label>
+                            <select class="form-control" v-model="shareForm.path">
+                                <option value="">-- 选择目录 --</option>
+                                <option value="/nas-pool/data">/nas-pool/data (数据目录)</option>
+                                <option value="/nas-pool/backup">/nas-pool/backup (备份目录)</option>
+                                <option value="/nas-pool">/nas-pool (根目录)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">访问用户名</label>
+                            <input type="text" class="form-control" v-model="shareForm.username" placeholder="访问用户名">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">访问密码</label>
+                            <input type="password" class="form-control" v-model="shareForm.password" placeholder="访问密码（留空则无需验证）">
                         </div>
                         <div class="mb-3">
                             <div class="form-check">
@@ -2284,7 +2297,20 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">路径</label>
-                            <input type="text" class="form-control" v-model="shareForm.path" placeholder="如: /mnt/tank/data/nfs">
+                            <select class="form-control" v-model="shareForm.path">
+                                <option value="">-- 选择目录 --</option>
+                                <option value="/nas-pool/data">/nas-pool/data (数据目录)</option>
+                                <option value="/nas-pool/backup">/nas-pool/backup (备份目录)</option>
+                                <option value="/nas-pool">/nas-pool (根目录)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">访问用户名</label>
+                            <input type="text" class="form-control" v-model="shareForm.username" placeholder="访问用户名">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">访问密码</label>
+                            <input type="password" class="form-control" v-model="shareForm.password" placeholder="访问密码（留空则无需验证）">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">允许客户端</label>

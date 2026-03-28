@@ -53,7 +53,7 @@ createApp({
         const shareForm = ref({ 
             name: '', path: '', writable: true, guest_ok: false, 
             clients: '*', options: 'rw,sync,no_subtree_check,no_root_squash', 
-            expires: 0, password: '' 
+            expires: 0, password: '', username: '' 
         });
         const snapshotForm = ref({ dataset: '', name: '' });
         const userForm = ref({ email: '', username: '', password: '', role: 'user' });
