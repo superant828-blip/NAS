@@ -26,6 +26,21 @@ createApp({
         const uploadProgress = ref(0);
         const uploadStatus = ref('');
         
+        // 角色权限配置
+        const rolePermissions = {
+            'admin': ['dashboard', 'files', 'albums', 'shares', 'snapshots', 'storage', 'users', 'monitor', 'trash', 'settings'],
+            'manager': ['dashboard', 'files', 'albums', 'shares', 'snapshots', 'storage', 'monitor', 'trash'],
+            'user': ['dashboard', 'files', 'albums', 'trash'],
+            'guest': ['dashboard', 'files']
+        };
+        
+        // 检查用户是否有权限访问某个模块
+        const canAccess = (module) => {
+            const role = currentUser.value?.role || 'guest';
+            const permissions = rolePermissions[role] || [];
+            return permissions.includes(module);
+        };
+        
         // 数据
         const pools = ref([]);
         const datasets = ref([]);
@@ -1527,7 +1542,7 @@ createApp({
             loadAlbums, handlePhotoUpload, createAlbum, viewAlbum,
             
             // 用户
-            loadUsers, createUser, deleteUser, updateProfile, changePassword, loadConfig, saveAllowedExtensions,
+            loadUsers, createUser, deleteUser, updateProfile, changePassword, loadConfig, saveAllowedExtensions, canAccess,
             
             // 任务
             loadJobs, cancelJob, getJobTypeIcon, getJobStatusClass, getJobStatusText,

@@ -1977,7 +1977,12 @@
                                         <td>{{ u.id }}</td>
                                         <td>{{ u.username }}</td>
                                         <td>{{ u.email }}</td>
-                                        <td><span class="badge" :style="{ background: u.role==='admin' ? 'var(--warning)' : 'var(--primary)', color: u.role==='admin' ? '#000' : '#fff' }">{{ u.role==='admin' ? '管理员' : '用户' }}</span></td>
+                                        <td><span class="badge" :style="{ 
+                                            background: u.role==='admin' ? 'var(--warning)' : 
+                                                       u.role==='manager' ? 'var(--success)' :
+                                                       u.role==='guest' ? 'var(--text-muted)' : 'var(--primary)',
+                                            color: u.role==='admin' ? '#000' : '#fff'
+                                        }">{{ u.role==='admin' ? '管理员' : u.role==='manager' ? '经理' : u.role==='guest' ? '访客' : '用户' }}</span></td>
                                         <td>{{ u.created_at }}</td>
                                         <td>
                                             <button v-if="u.id !== currentUser.id" class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteUser(u.id)">删除</button>
@@ -2395,9 +2400,18 @@
                         <div class="mb-3">
                             <label class="form-label">角色</label>
                             <select class="form-control" v-model="userForm.role">
-                                <option value="user">用户</option>
-                                <option value="admin">管理员</option>
+                                <option value="admin">管理员 (全部权限)</option>
+                                <option value="manager">管理员 (部分权限)</option>
+                                <option value="user">普通用户</option>
+                                <option value="guest">访客 (只读)</option>
                             </select>
+                        </div>
+                        <div class="mb-3" style="font-size:12px;color:var(--text-secondary);background:var(--bg-dark);padding:10px;border-radius:8px;">
+                            <div><strong>角色权限说明：</strong></div>
+                            <div>• 管理员：全部功能权限</div>
+                            <div>• 经理：文件管理、相册、分享，不含用户管理</div>
+                            <div>• 普通用户：文件管理、相册</div>
+                            <div>• 访客：只读访问</div>
                         </div>
                     </div>
                     <div class="modal-footer">
