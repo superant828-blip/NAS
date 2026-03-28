@@ -372,7 +372,12 @@ createApp({
             loading.value = true;
             try {
                 let url = API_BASE + '/files';
-                if (currentFolderId.value) url += '?parent_id=' + currentFolderId.value;
+                // 搜索模式
+                if (searchQuery.value && searchQuery.value.trim()) {
+                    url = API_BASE + '/search?q=' + encodeURIComponent(searchQuery.value.trim());
+                } else if (currentFolderId.value) {
+                    url += '?parent_id=' + currentFolderId.value;
+                }
                 const res = await fetch(url, { 
                     headers: { 'Authorization': 'Bearer ' + token.value } 
                 });

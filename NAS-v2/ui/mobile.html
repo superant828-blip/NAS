@@ -1186,7 +1186,12 @@
                     loading.value = true;
                     try {
                         let url = API + '/files';
-                        if (currentFolderId.value) url += '?parent_id=' + currentFolderId.value;
+                        // 搜索模式
+                        if (searchQuery.value && searchQuery.value.trim()) {
+                            url = API + '/search?q=' + encodeURIComponent(searchQuery.value.trim());
+                        } else if (currentFolderId.value) {
+                            url += '?parent_id=' + currentFolderId.value;
+                        }
                         const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token.value } });
                         if (res.ok) {
                             const data = await res.json();
