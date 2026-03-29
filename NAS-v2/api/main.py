@@ -218,6 +218,15 @@ try:
 except Exception as e:
     print(f"⚠ 插件加载失败，使用传统模式: {e}")
 
+# 移动端页面路由 (必须在静态文件挂载之前)
+@app.get("/mobile", response_class=HTMLResponse)
+async def mobile_ui():
+    """移动端页面"""
+    mobile_path = ROOT / "ui" / "mobile.html"
+    if mobile_path.exists():
+        return HTMLResponse(content=mobile_path.read_text())
+    return HTMLResponse(content="移动端页面不存在")
+
 # 静态文件配置
 from fastapi.staticfiles import StaticFiles
 import os
@@ -2337,15 +2346,6 @@ async def root():
         </body>
         </html>
     """)
-
-
-@app.get("/mobile", response_class=HTMLResponse)
-async def mobile_ui():
-    """移动端页面"""
-    mobile_path = ROOT / "ui" / "mobile.html"
-    if mobile_path.exists():
-        return HTMLResponse(content=mobile_path.read_text())
-    return HTMLResponse(content="移动端页面不存在")
 
 
 # ==================== 辅助函数 ====================
