@@ -2,7 +2,7 @@
 存储插件 - ZFS池、数据集、快照管理
 """
 from typing import Optional, List, Dict
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from dataclasses import asdict
 
@@ -20,10 +20,8 @@ snapshot_router = APIRouter(prefix="/api/v1/snapshots", tags=["快照"])
 
 # ==================== 依赖注入 ====================
 
-def get_current_user(authorization: str = None) -> User:
+def get_current_user(authorization: str = Header(None)) -> User:
     """获取当前用户 - 从Header获取"""
-    from fastapi import Header
-    authorization = Header(None)
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     

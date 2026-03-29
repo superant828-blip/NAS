@@ -5,7 +5,7 @@ import secrets
 from pathlib import Path
 from typing import Optional, List
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Form
+from fastapi import APIRouter, Depends, HTTPException, Form, Header
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, field_validator
 
@@ -75,8 +75,6 @@ class ShareLinkCreate(BaseModel):
 
 def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     """获取当前用户 - 从Header获取"""
-    from fastapi import Header
-    authorization = Header(None)
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     

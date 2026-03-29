@@ -3,7 +3,7 @@
 """
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File as FastAPIFile, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File as FastAPIFile, Form, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, constr
 
@@ -47,8 +47,6 @@ class AlbumCreate(BaseModel):
 
 def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     """获取当前用户 - 从Header获取"""
-    from fastapi import Header
-    authorization = Header(None)
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
     

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>直接下载测试</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #222; color: #fff; }
+        button { padding: 15px 30px; margin: 10px; font-size: 16px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 15px; background: #333; white-space: pre-wrap; }
+        .ok { color: #4f4; }
+        .err { color: #f44; }
+    </style>
+</head>
+<body>
+    <h1>直接下载测试</h1>
+    
+    <div id="tokenStatus">Token: 加载中...</div>
+    <br>
+    
+    <button onclick="downloadFile(5)">下载 ID=5 (小文件)</button>
+    <button onclick="downloadFile(19)">下载 ID=19 (大MP4)</button>
+    <button onclick="downloadFile(63)">下载 ID=63 (ZIP)</button>
+    <button onclick="checkToken()">检查Token</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        const API = 'http://' + location.host + '/api/v1';
+        const result = document.getElementById('result');
+        const tokenStatus = document.getElementById('tokenStatus');
+        
+        function log(msg, ok) {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.className = ok ? 'ok' : 'err';
+            result.appendChild(div);
+            console.log(msg);
+        }
+        
+        function checkToken() {
+            const t = localStorage.getItem('token');
+            if (t) {
+                tokenStatus.textContent = 'Token: ' + t.substring(0, 30) + '...';
+                log('Token存在', true);
+            } else {
+                tokenStatus.textContent = 'Token: ❌ 不存在!';
+                log('Token不存在，请先登录', false);
+            }
+        }
+        
+        async function downloadFile(id) {
+            const t = localStorage.getItem('token');
+            if (!t) {
+                log('❌ 请先登录', false);
+                return;
+            }
+            
+            log('开始下载文件ID=' + id + '...');
+            
+            try {
+                const res = await fetch(API + '/files/' + id + '/download', {
+                    headers: { 'Authorization': 'Bearer ' + t }
+                });
+                
+                log('HTTP状态: ' + res.status);
+                
+                if (res.ok) {
+                    const blob = await res.blob();
+                    log('✓ 下载成功! 大小: ' + (blob.size / 1024 / 1024).toFixed(2) + ' MB', true);
+                    
+                    // 自动触发下载
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'file_' + id;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    }, 100);
+                } else {
+                    const err = await res.text();
+                    log('❌ 下载失败: ' + err, false);
+                }
+            } catch(e) {
+                log('❌ 错误: ' + e.message, false);
+            }
+        }
+        
+        // 初始化检查
+        checkToken();
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "skills": {
+    "baidu-web-search": {
+      "version": "2.1.0",
+      "installedAt": 1774703714346
+    },
+    "36kr-aireportlist": {
+      "version": "1.0.5",
+      "installedAt": 1774704314731
+    },
+    "36kr-ainotes": {
+      "version": "1.0.4",
+      "installedAt": 1774704350910
+    },
+    "36kr-hotlist": {
+      "version": "1.0.4",
+      "installedAt": 1774704577737
+    }
+  }
+}

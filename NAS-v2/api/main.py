@@ -224,11 +224,16 @@ import os
 
 ui_path = ROOT / "ui"
 if ui_path.exists():
+    # 使用StaticFiles的html模式，直接服务ui目录下的所有文件
+    # html=True 使得访问 /file.html 时自动查找 ui/file.html
+    app.mount("/ui", StaticFiles(directory=str(ui_path), html=True), name="ui")
+    print(f"✓ UI静态文件目录: {ui_path}")
+    
     # 挂载JS目录
     js_path = ui_path / "js"
     if js_path.exists():
         app.mount("/js", StaticFiles(directory=str(js_path)), name="js")
-        print(f"✓ 静态文件目录: {js_path}")
+        print(f"✓ JS目录: {js_path}")
     
     # 挂载uploads目录
     uploads_path = ROOT / "uploads"
