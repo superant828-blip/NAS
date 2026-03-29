@@ -32,8 +32,8 @@ class UserCreate(BaseModel):
     
     @field_validator('password')
     def validate_password(cls, v):
-        from core.security import PasswordStrengthChecker
-        result = PasswordStrengthChecker.check(v)
+        from core.security import InputValidator
+        result = InputValidator.validate_password_strength(v)
         if not result.valid:
             raise ValueError(result.message)
         return v
@@ -52,8 +52,8 @@ class PasswordChange(BaseModel):
     
     @field_validator('new_password')
     def validate_new_password(cls, v):
-        from core.security import PasswordStrengthChecker
-        result = PasswordStrengthChecker.check(v)
+        from core.security import InputValidator
+        result = InputValidator.validate_password_strength(v)
         if not result.valid:
             raise ValueError(result.message)
         return v

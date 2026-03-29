@@ -388,13 +388,6 @@ class UserCreate(BaseModel):
 class PasswordChange(BaseModel):
     old_password: str
     new_password: str
-    
-    @field_validator('new_password')
-    def validate_new_password(cls, v):
-        result = InputValidator.validate_password_strength(v)
-        if not result.valid:
-            raise ValueError(result.message)
-        return v
 
 
 class FolderCreate(BaseModel):
