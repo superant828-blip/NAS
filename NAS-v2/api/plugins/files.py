@@ -520,8 +520,37 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
         if not file:
             raise HTTPException(status_code=404, detail="File not found")
         
+        # 多路径回退机制
         file_path = UPLOAD_DIR / file['path']
-        if not file_path.exists():
+        
+        # 如果原路径不存在，按文件名/大小智能搜索
+        if not file_path.exists() or not file_path.is_file():
+            target_size = file['size']
+            target_ext = os.path.splitext(file['name'])[1].lower() if '.' in file['name'] else ''
+            
+            # 遍历用户目录查找匹配的文件
+            user_dir = UPLOAD_DIR / "files" / str(file['user_id'])
+            found_path = None
+            if user_dir.exists():
+                for f in user_dir.iterdir():
+                    if f.is_file():
+                        # 方法1: 文件名包含原始名称 (前15字符)
+                        base_name = os.path.splitext(file['name'])[0][:15].lower()
+                        if base_name and base_name in f.stem.lower():
+                            found_path = f
+                            break
+                        
+                        # 方法2: 扩展名相同且大小相近 (10%误差)
+                        if target_size > 0 and f.suffix.lower() == target_ext:
+                            size_diff = abs(f.stat().st_size - target_size)
+                            if size_diff < max(target_size * 0.1, 1000):  # 10%或1KB
+                                found_path = f
+                                break
+            
+            if found_path:
+                file_path = found_path
+        
+        if not file_path.exists() or not file_path.is_file():
             raise HTTPException(status_code=404, detail="File not found on disk")
         
         return FileResponse(
