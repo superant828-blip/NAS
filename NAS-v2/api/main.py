@@ -1236,7 +1236,8 @@ async def search_files(
 
 # ==================== 回收站 ====================
 
-@app.get("/api/v1/trash")
+@app.get("/api/v1/trash", include_in_schema=False)
+@app.get("/api/v1/trash/")
 async def get_trash(current_user: User = Depends(get_current_user)):
     """获取回收站文件列表"""
     conn = get_file_db()

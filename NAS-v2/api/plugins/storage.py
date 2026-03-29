@@ -2,6 +2,7 @@
 存储插件 - ZFS池、数据集、快照管理
 """
 from typing import Optional, List, Dict
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from dataclasses import asdict
@@ -147,6 +148,56 @@ async def delete_dataset(
         raise HTTPException(status_code=400, detail=result.get("message"))
     
     return result
+
+
+@router.get("/usage")
+async def get_storage_usage(current_user: User = Depends(get_current_user)):
+    """获取存储使用统计"""
+    import os
+    total = 0
+    used = 0
+    
+    # 从ZFS获取存储池信息
+    try:
+        pools = zfs_manager.list_pools()
+        for pool in pools:
+            # 解析大小 (例如 "496G", "440M")
+            size_str = pool.size.replace("G", "").replace("M", "").replace("T", "")
+            unit = pool.size[-1]
+            size = float(size_str)
+            if unit == "M":
+                size = size / 1024
+            elif unit == "T":
+                size = size * 1024
+            total += size
+            
+            used_str = pool.allocated.replace("G", "").replace("M", "").replace("T", "")
+            unit = pool.allocated[-1]
+            size = float(used_str)
+            if unit == "M":
+                size = size / 1024
+            elif unit == "T":
+                size = size * 1024
+            used += size
+    except Exception as e:
+        pass
+    
+    # 也从uploads目录获取信息作为补充
+    uploads_path = Path(__file__).resolve().parent.parent.parent / "uploads"
+    if uploads_path.exists():
+        try:
+            for entry in uploads_path.rglob("*"):
+                if entry.is_file():
+                    used += entry.stat().st_size / (1024**3)  # 转换为GB
+        except:
+            pass
+    
+    return {
+        "total": round(total, 2),
+        "used": round(used, 2),
+        "free": round(total - used, 2),
+        "percent": round(used / total * 100, 2) if total > 0 else 0
+    }
 
 
 # ==================== 快照管理 ====================
