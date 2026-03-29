@@ -2259,28 +2259,6 @@ async def get_system_status(current_user: User = Depends(get_current_user)):
     }
 
 
-# ==================== 系统配置 ====================
-
-@app.get("/api/v1/config")
-async def get_config(current_user: User = Depends(get_current_user)):
-    """获取系统配置"""
-    return {
-        "allowed_extensions": sorted(list(ALLOWED_EXTENSIONS))
-    }
-
-@app.put("/api/v1/config")
-async def update_config(request: Request, current_user: User = Depends(require_admin)):
-    """更新系统配置（仅管理员）"""
-    data = await request.json()
-    
-    global ALLOWED_EXTENSIONS
-    if "allowed_extensions" in data:
-        allowed = [ext.strip().lower() for ext in data["allowed_extensions"] if ext.strip()]
-        ALLOWED_EXTENSIONS = set(allowed)
-        APP_CONFIG["allowed_extensions"] = allowed
-        save_app_config(APP_CONFIG)
-    
-    return {"success": True, "allowed_extensions": sorted(list(ALLOWED_EXTENSIONS))}
 
 # ==================== 缓存管理 ====================
 

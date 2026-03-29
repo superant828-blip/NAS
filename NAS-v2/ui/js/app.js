@@ -1529,8 +1529,8 @@ createApp({
             if (currentUser.value?.role !== 'admin') return;
             const extensions = allowedExtensionsInput.value.split(',').map(e => e.trim()).filter(e => e);
             try {
-                const res = await fetch(API_BASE + '/config', {
-                    method: 'PUT',
+                const res = await fetch(API_BASE + '/config/update', {
+                    method: 'POST',
                     headers: { 
                         'Authorization': 'Bearer ' + token.value,
                         'Content-Type': 'application/json'

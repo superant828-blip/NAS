@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 def get_routers():
-    from . import auth, files, albums, shares, storage, users, system, jobs, events
+    from . import auth, files, albums, shares, storage, users, system, jobs, events, config
     return [
         auth.router,
         files.router,
@@ -12,6 +12,7 @@ def get_routers():
         shares.smb_router,
         shares.nfs_router,
         shares.links_router,
+        config.router,
         storage.router,
         storage.snapshot_router,
         users.router,

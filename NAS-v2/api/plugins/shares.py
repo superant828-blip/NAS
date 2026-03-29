@@ -163,15 +163,24 @@ async def get_my_shares(current_user: User = Depends(get_current_user)):
         for row in cursor.fetchall():
             share = dict(row)
             
-            # 获取文件名
+            # 获取文件名 - 根据file_type查询不同表
             if share['file_type'] == "file":
+                # 文件: 查询files表
                 file_cursor = conn.execute("SELECT name FROM files WHERE id = ?", (share['file_id'],))
                 file_row = file_cursor.fetchone()
                 share['file_name'] = file_row['name'] if file_row else None
-            else:
+            elif share['file_type'] == "folder":
+                # 文件夹: 查询files表(is_folder=1)
+                file_cursor = conn.execute("SELECT name FROM files WHERE id = ? AND is_folder = 1", (share['file_id'],))
+                file_row = file_cursor.fetchone()
+                share['file_name'] = file_row['name'] if file_row else None
+            elif share['file_type'] == "photo":
+                # 照片: 查询photos表
                 photo_cursor = conn.execute("SELECT original_name FROM photos WHERE id = ?", (share['file_id'],))
                 photo_row = photo_cursor.fetchone()
                 share['file_name'] = photo_row['original_name'] if photo_row else None
+            else:
+                share['file_name'] = None
             
             shares.append(share)
         
@@ -362,7 +371,14 @@ async def view_share(token: str, password: Optional[str] = None):
             cursor = conn.execute("SELECT * FROM files WHERE id = ?", (share['file_id'],))
             folder = cursor.fetchone()
             if folder:
-                folder_path = UPLOAD_DIR / folder['path']
+                # 处理路径格式 - 支持新旧两种格式
+                # 新格式: files/1/文档, 旧格式: /文档 或 文档
+                folder_path_str = folder['path']
+                if not folder_path_str.startswith('files/'):
+                    # 旧格式，需要添加用户目录前缀
+                    folder_path_str = f"files/{folder['user_id']}/{folder['name']}"
+                folder_path = UPLOAD_DIR / folder_path_str
+                
                 if not folder_path.exists():
                     raise HTTPException(status_code=404, detail="Folder not found on disk")
                 
