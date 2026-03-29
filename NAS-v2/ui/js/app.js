@@ -1044,7 +1044,7 @@ createApp({
         const loadShares = async () => { 
             shares.value = { smb: [], nfs: [] };
             try {
-                const res = await fetch(API_BASE + '/shares/all', {
+                const res = await fetch(API_BASE + '/shares/smb/all', {
                     headers: { 'Authorization': 'Bearer ' + token.value }
                 });
                 if (!res.ok) {

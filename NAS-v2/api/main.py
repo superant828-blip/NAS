@@ -2117,18 +2117,6 @@ async def scrub_pool(pool_name: str, current_user: User = Depends(require_admin)
 
 # ==================== 共享管理 (原有功能) ====================
 
-@app.get("/api/v1/shares/all")
-async def list_all_shares(current_user: User = Depends(get_current_user)):
-    """列出所有共享 (SMB/NFS)"""
-    smb_shares = smb_manager.list_shares()
-    nfs_shares = nfs_manager.list_shares()
-    
-    return {
-        "smb": [asdict(s) for s in smb_shares],
-        "nfs": [asdict(s) for s in nfs_shares]
-    }
-
-
 @app.post("/api/v1/shares/smb")
 async def create_smb_share(
     name: str,
