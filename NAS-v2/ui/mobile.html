@@ -1426,6 +1426,12 @@
                 
                 const handleUpload = async (e) => {
                     try {
+                        // 检查是否登录
+                        if (!token.value) {
+                            showToast('请先登录', 'error');
+                            return;
+                        }
+                        
                         const fileList = e.target.files;
                         if (!fileList || !fileList.length) return;
                         const files = Array.from(fileList);
@@ -1484,13 +1490,22 @@
                                 
                                 xhr.onload = () => {
                                     if (xhr.status >= 200 && xhr.status < 300) {
-                                        uploadedSize += file.size;
-                                        resolve();
+                                        try {
+                                            const response = JSON.parse(xhr.responseText);
+                                            if (response.id) {
+                                                uploadedSize += file.size;
+                                                resolve();
+                                            } else {
+                                                reject(new Error(response.message || '上传失败'));
+                                            }
+                                        } catch(e) {
+                                            resolve();
+                                        }
                                     } else {
-                                        reject(new Error('上传失败'));
+                                        reject(new Error('上传失败: ' + xhr.status));
                                     }
                                 };
-                                xhr.onerror = () => reject(new Error('上传失败'));
+                                xhr.onerror = () => reject(new Error('网络错误'));
                                 xhr.send(formData);
                             });
                         }
@@ -1510,6 +1525,12 @@
                 const triggerPhotoUpload = () => document.getElementById('photoUpload').click();
                 
                 const handlePhotoUpload = async (e) => {
+                    // 检查是否登录
+                    if (!token.value) {
+                        showToast('请先登录', 'error');
+                        return;
+                    }
+                    
                     const files = e.target.files;
                     if (!files.length) return;
                     
@@ -1519,6 +1540,8 @@
                         if (currentAlbumId.value) {
                             formData.append('album_id', currentAlbumId.value);
                         }
+                        uploadStatus.value = `正在上传: ${file.name}`;
+                        
                         const res = await fetch(API + '/photos/upload', {
                             method: 'POST',
                             headers: { 'Authorization': 'Bearer ' + token.value },
@@ -1530,6 +1553,7 @@
                             return;
                         }
                     }
+                    uploadStatus.value = '上传完成';
                     showToast('上传完成');
                     if (currentAlbumId.value) {
                         viewAlbum(currentAlbumId.value);
