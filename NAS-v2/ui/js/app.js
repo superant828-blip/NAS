@@ -815,6 +815,14 @@ createApp({
                 });
                 if (res.ok) {
                     const blob = await res.blob();
+                    // 检查是否是错误响应（blob太小可能是错误JSON）
+                    if (blob.size < 100) {
+                        const text = await blob.text();
+                        if (text.includes('detail')) {
+                            alert('文件不存在于磁盘上');
+                            return;
+                        }
+                    }
                     const fileName = file?.name || 'download';
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');

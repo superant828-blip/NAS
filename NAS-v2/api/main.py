@@ -745,9 +745,10 @@ async def upload_file(
         ext = file.filename.rsplit(".", 1)[1].lower()
     
     logger.info(f"File ext: {ext}, allowed: {ext in ALLOWED_EXTENSIONS}")
-    if ext and ext not in ALLOWED_EXTENSIONS:
-        logger.warning(f"File type not allowed: {ext}")
-        raise HTTPException(status_code=400, detail="File type not allowed")
+    # 文件类型检查已禁用
+    # if ext and ext not in ALLOWED_EXTENSIONS:
+    #     logger.warning(f"File type not allowed: {ext}")
+    #     raise HTTPException(status_code=400, detail="File type not allowed")
     
     # 验证文件名
     result = InputValidator.validate_filename(file.filename)
