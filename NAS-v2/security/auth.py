@@ -628,6 +628,7 @@ class AuthManager:
         else:
             import sqlite3
             conn = sqlite3.connect(config.db_path)
+            conn.row_factory = sqlite3.Row
             try:
                 if user_id:
                     cursor = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
@@ -640,7 +641,16 @@ class AuthManager:
                 
                 row = cursor.fetchone()
                 if row:
-                    return User(*row)
+                    return User(
+                        id=row['id'],
+                        username=row['username'],
+                        email=row['email'],
+                        password_hash=row['password_hash'],
+                        role=row['role'],
+                        created_at=str(row['created_at']) if row['created_at'] else "",
+                        last_login=str(row['last_login']) if row['last_login'] else None,
+                        enabled=bool(row['enabled'])
+                    )
                 return None
             finally:
                 conn.close()
