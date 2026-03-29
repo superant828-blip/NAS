@@ -794,13 +794,27 @@ createApp({
                 alert('请选择一个文件'); return;
             }
             const fileId = Array.from(selectedFiles.value)[0];
+            
+            // 检查选中的是文件还是文件夹
+            const file = files.value.find(f => f.id === fileId);
+            if (!file) {
+                alert('文件不存在'); return;
+            }
+            if (file.is_folder) {
+                alert('文件夹无法下载，请选择文件'); return;
+            }
+            
+            // 检查token
+            if (!token.value) {
+                alert('请先登录'); return;
+            }
+            
             try {
                 const res = await fetch(API_BASE + '/files/' + fileId + '/download', {
                     headers: { 'Authorization': 'Bearer ' + token.value }
                 });
                 if (res.ok) {
                     const blob = await res.blob();
-                    const file = files.value.find(f => f.id === fileId);
                     const fileName = file?.name || 'download';
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -811,11 +825,13 @@ createApp({
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
                 } else {
-                    alert('下载失败');
+                    const errorText = await res.text();
+                    console.error('下载失败:', res.status, errorText);
+                    alert('下载失败: ' + res.status);
                 }
             } catch(e) {
                 console.error(e);
-                alert('下载失败');
+                alert('下载失败: ' + e.message);
             }
         };
         
