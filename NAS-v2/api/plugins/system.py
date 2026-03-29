@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from security.auth import auth_manager, User
 from core.cache import get_cache_stats, invalidate_cache
 
-router = APIRouter(tags=["系统"])
+router = APIRouter(prefix="/api/v1/system", tags=["系统"])
 
 
 def get_current_user(authorization: Optional[str] = Header(None)) -> User:
