@@ -227,6 +227,9 @@ if ui_path.exists():
     # 使用StaticFiles的html模式，直接服务ui目录下的所有文件
     # html=True 使得访问 /file.html 时自动查找 ui/file.html
     app.mount("/ui", StaticFiles(directory=str(ui_path), html=True), name="ui")
+    
+    # 挂载根路径，直接服务ui目录中的文件 (用于 test-download.html, simple-download.html 等)
+    app.mount("/", StaticFiles(directory=str(ui_path), html=True), name="root_ui")
     print(f"✓ UI静态文件目录: {ui_path}")
     
     # 挂载JS目录
