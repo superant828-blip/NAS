@@ -1609,7 +1609,7 @@ createApp({
             loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, 
             formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles, sortFiles, viewMode,
             handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, uploadProgress, uploadStatus, 
-            renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected,
+            renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected, downloadFile,
             
             // 系统监控
             wsConnected, wsConnection, eventLogs, connectedClients, storageWarning,
@@ -1617,3 +1617,81 @@ createApp({
         };
     }
 }).mount('#app');
+// === AI Agent 前端集成 (v3.1.0+) ===
+
+// 智能助手聊天
+async function chatWithAssistant(message) {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/assistant/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ message })
+  });
+  return response.json();
+}
+
+// 预测分析
+async function runPrediction(type = 'storage') {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`/api/v1/agents/predict/${type}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return response.json();
+}
+
+// 获取Agent状态
+async function getAgentStatus() {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/status', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return response.json();
+}
+
+// 运行测试Agent
+async function runTestAgent(task) {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/test/run', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ task })
+  });
+  return response.json();
+}
+
+// 运行编程Agent
+async function runCodingAgent(task, code) {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/coding/run', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ task, code })
+  });
+  return response.json();
+}
+
+// 运行调优Agent
+async function runTuningAgent(target) {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/tuning/run', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ target })
+  });
+  return response.json();
+}
+
+console.log('✅ AI Agent 前端集成已加载');

@@ -366,3 +366,58 @@ async def test_and_fix_pipeline(
 
 # 导入 uuid
 import uuid
+# === 智能助手 API (v3.1.0+) ===
+
+@router.post("/assistant/chat")
+async def assistant_chat(request: dict):
+    """智能助手对话"""
+    try:
+        from api.agents.assistant.smart_assistant import SmartAssistantAgent
+        from api.tools.base import ToolContext
+        
+        agent = SmartAssistantAgent()
+        context = ToolContext(user_id=1, username='user')
+        
+        result = await agent.run(request.get('message', ''), context)
+        
+        return {
+            'success': result.success,
+            'reply': result.data.get('message', str(result.data)) if result.data else result.error,
+            'data': result.data
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+@router.post("/predict/{predict_type}")
+async def run_prediction(predict_type: str, request: dict = {}):
+    """预测分析"""
+    try:
+        from api.agents.assistant.predictive_agent import PredictiveAgent
+        
+        agent = PredictiveAgent()
+        task = request.get('task', f'{predict_type} prediction')
+        
+        result = await agent.run(task, {})
+        
+        return {
+            'success': result.success,
+            'data': result.data,
+            'error': result.error
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+@router.get("/predict/trends")
+async def get_trends():
+    """获取趋势分析"""
+    try:
+        from api.agents.assistant.predictive_agent import PredictiveAgent
+        
+        agent = PredictiveAgent()
+        result = await agent.run('trend analysis', {})
+        
+        return {'success': result.success, 'data': result.data}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+print('✅ 智能助手路由已添加')

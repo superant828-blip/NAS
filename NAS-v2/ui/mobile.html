@@ -1775,4 +1775,33 @@
         }).mount('#app');
     </script>
 </body>
-</html>
+</html><script>
+// === AI Agent 移动端集成 (v3.1.0+) ===
+async function chatWithAssistant(message) {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/assistant/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ message })
+  });
+  return response.json();
+}
+
+async function runPrediction(type = 'storage') {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`/api/v1/agents/predict/${type}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return response.json();
+}
+
+async function getAgentStatus() {
+  const token = localStorage.getItem('token');
+  const response = await fetch('/api/v1/agents/status', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  return response.json();
+}
+console.log('✅ AI Agent 移动端集成已加载');
+</script>
