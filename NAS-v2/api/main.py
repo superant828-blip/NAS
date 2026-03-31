@@ -49,6 +49,9 @@ from share.nfs import nfs_manager, NFSShare
 from share.snapshot import snapshot_manager, ZFSSnapshot
 from security.auth import auth_manager, User
 
+# 导入智能体路由
+from routes.agents import router as agents_router
+
 # ==================== 上传配置 ====================
 UPLOAD_DIR = Path("/nas-pool/data/uploads")
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
@@ -217,6 +220,10 @@ try:
     print("✓ 插件系统加载成功")
 except Exception as e:
     print(f"⚠ 插件加载失败，使用传统模式: {e}")
+
+# ==================== 智能体路由注册 ====================
+app.include_router(agents_router)
+print("✓ 智能体系统加载成功")
 
 # 移动端页面路由 (必须在静态文件挂载之前)
 @app.get("/mobile", response_class=HTMLResponse)
@@ -1052,6 +1059,7 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
         )
     finally:
         conn.close()
+
 
 
 @app.delete("/api/v1/files/{file_id}")
@@ -2332,6 +2340,19 @@ def asdict(obj):
         return result
     return obj
 
+
+# ==================== 智能体系统初始化 ====================
+def init_systems():
+    """初始化所有系统"""
+    try:
+        from api.init_agents import init_agent_system, init_tools
+        init_agent_system()
+        init_tools()
+    except Exception as e:
+        print(f"⚠ 系统初始化失败: {e}")
+
+# 启动时初始化
+init_systems()
 
 if __name__ == "__main__":
     import uvicorn
