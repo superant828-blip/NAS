@@ -1609,7 +1609,7 @@ createApp({
             loadFiles, getFileIcon, handleFileClick, toggleSelect, clearSelection, 
             formatSize, formatDate, goHome, goParent, refreshFiles, searchFiles, sortFiles, viewMode,
             handleUpload, triggerUpload, createFolder, deleteSelected, previewFile, uploadProgress, uploadStatus, 
-            renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected,
+            renameFile, prepareRename, loadFolders, showMoveDialog, moveSelected, downloadFile,
             
             // 系统监控
             wsConnected, wsConnection, eventLogs, connectedClients, storageWarning,
