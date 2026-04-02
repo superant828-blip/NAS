@@ -1233,8 +1233,8 @@
                 };
                 
                 const downloadFile = (f) => {
-                    // 移动端使用window.open下载
-                    const url = API + '/files/' + f.id + '/download';
+                    // 移动端使用window.open下载，带上token
+                    const url = API + '/files/' + f.id + '/download?token=' + token.value;
                     window.open(url, '_blank');
                 };
                 

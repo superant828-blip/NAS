@@ -49,13 +49,21 @@ class MoveRequest(BaseModel):
 
 
 async def get_current_user_id(request: Request) -> int:
-    """从Token获取用户ID"""
+    """从Token获取用户ID - 支持header或query参数"""
+    # 优先从header获取
     auth_header = request.headers.get('authorization')
-    if not auth_header or not auth_header.startswith("Bearer "):
+    auth_token = None
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        auth_token = auth_header.replace("Bearer ", "")
+    else:
+        # 其次从query参数获取
+        auth_token = request.query_params.get('token')
+    
+    if not auth_token:
         raise HTTPException(status_code=401, detail="未授权")
     
-    token = auth_header.replace("Bearer ", "")
-    payload = auth_manager.verify_token(token)
+    payload = auth_manager.verify_token(auth_token)
     if not payload:
         raise HTTPException(status_code=401, detail="Token无效")
     return payload.get("user_id", 1)
@@ -201,6 +209,10 @@ async def download_file(
     request: Request
 ):
     """下载文件"""
+    # 调试
+    print(f"DEBUG: query_params={dict(request.query_params)}")
+    print(f"DEBUG: headers={dict(request.headers)}")
+    
     user_id = await get_current_user_id(request)
     
     conn = get_file_db()

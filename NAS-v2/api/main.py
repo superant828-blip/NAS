@@ -29,7 +29,7 @@ from dataclasses import asdict
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from fastapi import FastAPI, Depends, HTTPException, status, Header, UploadFile, File as FastAPIFile, Form, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Header, UploadFile, File as FastAPIFile, Form, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
@@ -491,13 +491,20 @@ class ShareLinkCreate(BaseModel):
 
 # ==================== 依赖注入 ====================
 
-def get_current_user(authorization: str = Header(None)) -> User:
-    """获取当前用户"""
-    if not authorization or not authorization.startswith("Bearer "):
+def get_current_user(authorization: str = Header(None), token: str = Query(None)) -> User:
+    """获取当前用户 - 支持header或query参数token"""
+    # 优先使用header中的token
+    auth_token = None
+    if authorization and authorization.startswith("Bearer "):
+        auth_token = authorization[7:]
+    # 其次使用query参数中的token
+    elif token:
+        auth_token = token
+    
+    if not auth_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
-    token = authorization[7:]
-    payload = auth_manager.verify_token(token)
+    payload = auth_manager.verify_token(auth_token)
     
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -991,77 +998,6 @@ async def merge_chunks(
     finally:
         conn.close()
 
-
-@app.get("/api/v1/files/{file_id}/download")
-async def download_file(file_id: int, current_user: User = Depends(get_current_user)):
-    """下载文件"""
-    conn = get_file_db()
-    try:
-        # 管理员可以下载任何文件，普通用户只能下载自己的文件
-        if current_user.role == 'admin':
-            cursor = conn.execute(
-                "SELECT * FROM files WHERE id = ? AND is_folder = 0 AND status = 1",
-                (file_id,)
-            )
-        else:
-            cursor = conn.execute(
-                "SELECT * FROM files WHERE id = ? AND user_id = ? AND is_folder = 0 AND status = 1",
-                (file_id, current_user.id)
-            )
-        file = cursor.fetchone()
-        if not file:
-            raise HTTPException(status_code=404, detail="File not found in database")
-        
-        # 转换为字典以便安全访问
-        file_dict = dict(file)
-        file_name = file_dict.get('name', '')
-        file_path = None
-        
-        # 尝试多个可能的路径
-        file_size = file_dict.get('size', 0)
-        
-        # 简化的路径搜索 - 优先使用确定路径
-        path_val = file_dict.get('path', '')
-        
-        if path_val:
-            p = path_val.lstrip('/')
-            # 直接检查几个可能的路径
-            for base in [ROOT / "uploads", Path("/nas-pool/data/uploads")]:
-                test_path = base / p
-                if test_path.exists():
-                    file_path = test_path
-                    break
-                # 尝试files子目录
-                test_path2 = base / "files" / str(file_dict.get('user_id', 1)) / p
-                if test_path2.exists():
-                    file_path = test_path2
-                    break
-        
-        # 如果还没找到，按文件名搜索（限制深度）
-        if not file_path or not file_path.exists():
-            search_dirs = [ROOT / "uploads"]
-            for search_dir in search_dirs:
-                if search_dir.exists():
-                    for root, dirs, files in os.walk(search_dir):
-                        # 限制搜索深度
-                        if root.count(os.sep) - str(search_dir).count(os.sep) > 3:
-                            continue
-                        if file_name in files:
-                            file_path = Path(root) / file_name
-                            break
-                if file_path and file_path.exists():
-                    break
-        
-        if not file_path or not file_path.exists():
-            raise HTTPException(status_code=404, detail="文件不存在于磁盘上")
-        
-        return FileResponse(
-            path=str(file_path),
-            filename=file['name'],
-            media_type=file['mime_type'] or "application/octet-stream"
-        )
-    finally:
-        conn.close()
 
 
 
