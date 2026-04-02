@@ -50,7 +50,15 @@ from share.snapshot import snapshot_manager, ZFSSnapshot
 from security.auth import auth_manager, User
 
 # 导入智能体路由
-from routes.agents import router as agents_router
+from api.routes.agents import router as agents_router
+
+# 导入路由模块 (路由层重构)
+from api.routes.auth import router as auth_router
+from api.routes.files import router as files_router
+from api.routes.photos import router as photos_router
+from api.routes.shares import router as shares_router
+from api.routes.storage import router as storage_router
+from api.routes.system import router as system_router
 
 # ==================== 上传配置 ====================
 UPLOAD_DIR = Path("/nas-pool/data/uploads")
@@ -224,6 +232,15 @@ except Exception as e:
 # ==================== 智能体路由注册 ====================
 app.include_router(agents_router)
 print("✓ 智能体系统加载成功")
+
+# ==================== 路由层重构 - 模块化路由 ====================
+app.include_router(auth_router)
+app.include_router(files_router)
+app.include_router(photos_router)
+app.include_router(shares_router)
+app.include_router(storage_router)
+app.include_router(system_router)
+print("✓ 模块化路由加载成功")
 
 # 移动端页面路由 (必须在静态文件挂载之前)
 @app.get("/mobile", response_class=HTMLResponse)
