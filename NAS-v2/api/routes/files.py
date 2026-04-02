@@ -198,10 +198,10 @@ async def upload_file(
 @router.get("/{file_id}/download")
 async def download_file(
     file_id: int,
-    authorization: str = Query(None)
+    request: Request
 ):
     """下载文件"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -214,15 +214,30 @@ async def download_file(
             raise HTTPException(status_code=404, detail="文件不存在")
         
         file_info = dict(row)
-        file_path = UPLOAD_DIR / file_info["path"]
+        path_val = file_info.get("path", "")
         
-        if not file_path.exists():
-            # 尝试多路径回退
-            alt_path = ROOT / file_info["path"]
-            if alt_path.exists():
-                file_path = alt_path
-            else:
-                raise HTTPException(status_code=404, detail="文件不存在")
+        # 多路径搜索：UPLOAD_DIR, ROOT/uploads, 当前目录
+        search_dirs = [
+            UPLOAD_DIR,
+            ROOT / "uploads",
+            Path("/nas-pool/data/uploads"),
+        ]
+        
+        file_path = None
+        for search_dir in search_dirs:
+            # 尝试直接拼接
+            test_path = search_dir / path_val
+            if test_path.exists():
+                file_path = test_path
+                break
+            # 尝试在files子目录
+            test_path = search_dir / "files" / str(user_id) / path_val
+            if test_path.exists():
+                file_path = test_path
+                break
+        
+        if not file_path or not file_path.exists():
+            raise HTTPException(status_code=404, detail="文件不存在于磁盘上")
         
         return FileResponse(
             path=file_path,
