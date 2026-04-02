@@ -1020,27 +1020,39 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
         # 尝试多个可能的路径
         file_size = file_dict.get('size', 0)
         
-        # 方法1: 优先使用path字段（这是实际存储路径）
+        # 增强的路径搜索
         path_val = file_dict.get('path', '')
+        full_path_val = file_dict.get('full_path', '')
+        
+        # 收集所有可能的路径
+        possible_paths = []
+        
         if path_val:
-            path_val = path_val.lstrip('/')
-            file_path = UPLOAD_DIR / path_val
-            if not file_path.exists():
-                file_path = ROOT / "uploads" / path_val
+            p = path_val.lstrip('/')
+            possible_paths.extend([
+                UPLOAD_DIR / p,
+                ROOT / "uploads" / p,
+                ROOT / p,
+                Path("/nas-pool/data/uploads") / p,
+            ])
         
-        # 方法2: 如果方法1失败，尝试使用full_path
-        if not file_path or not file_path.exists():
-            full_path = file_dict.get('full_path', '')
-            if full_path:
-                full = full_path.lstrip('/')
-                if '/' in full:
-                    file_path = UPLOAD_DIR / full
-                    if not file_path.exists():
-                        file_path = ROOT / "uploads" / full
+        if full_path_val:
+            p = full_path_val.lstrip('/')
+            possible_paths.extend([
+                UPLOAD_DIR / p,
+                ROOT / "uploads" / p,
+                ROOT / p,
+            ])
         
-        # 方法3: 如果以上都失败，根据文件名搜索
+        # 搜索实际文件
+        for test_path in possible_paths:
+            if test_path.exists():
+                file_path = test_path
+                break
+        
+        # 如果还没找到，按文件名搜索
         if not file_path or not file_path.exists():
-            for search_dir in [UPLOAD_DIR, ROOT / "uploads"]:
+            for search_dir in [ROOT / "uploads", UPLOAD_DIR, Path("/nas-pool/data/uploads")]:
                 if search_dir.exists():
                     for root, dirs, files in os.walk(search_dir):
                         if file_name in files:
@@ -1049,9 +1061,9 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
                 if file_path and file_path.exists():
                     break
         
-        # 方法4: 如果按文件名没找到，按文件大小搜索
+        # 按大小搜索（作为后备）
         if not file_path or not file_path.exists():
-            for search_dir in [UPLOAD_DIR, ROOT / "uploads"]:
+            for search_dir in [ROOT / "uploads", UPLOAD_DIR]:
                 if search_dir.exists():
                     for root, dirs, files in os.walk(search_dir):
                         for f in files:
@@ -1065,9 +1077,8 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
                 if file_path and file_path.exists():
                     break
         
-        if not file_path.exists():
-            # 返回更详细的错误信息
-            raise HTTPException(status_code=404, detail=f"File not found on disk: {file['path']}")
+        if not file_path or not file_path.exists():
+            raise HTTPException(status_code=404, detail="文件不存在于磁盘上")
         
         return FileResponse(
             path=str(file_path),
