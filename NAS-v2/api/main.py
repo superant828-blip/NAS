@@ -1020,60 +1020,35 @@ async def download_file(file_id: int, current_user: User = Depends(get_current_u
         # 尝试多个可能的路径
         file_size = file_dict.get('size', 0)
         
-        # 增强的路径搜索
+        # 简化的路径搜索 - 优先使用确定路径
         path_val = file_dict.get('path', '')
-        full_path_val = file_dict.get('full_path', '')
-        
-        # 收集所有可能的路径
-        possible_paths = []
         
         if path_val:
             p = path_val.lstrip('/')
-            possible_paths.extend([
-                UPLOAD_DIR / p,
-                ROOT / "uploads" / p,
-                ROOT / p,
-                Path("/nas-pool/data/uploads") / p,
-            ])
+            # 直接检查几个可能的路径
+            for base in [ROOT / "uploads", Path("/nas-pool/data/uploads")]:
+                test_path = base / p
+                if test_path.exists():
+                    file_path = test_path
+                    break
+                # 尝试files子目录
+                test_path2 = base / "files" / str(file_dict.get('user_id', 1)) / p
+                if test_path2.exists():
+                    file_path = test_path2
+                    break
         
-        if full_path_val:
-            p = full_path_val.lstrip('/')
-            possible_paths.extend([
-                UPLOAD_DIR / p,
-                ROOT / "uploads" / p,
-                ROOT / p,
-            ])
-        
-        # 搜索实际文件
-        for test_path in possible_paths:
-            if test_path.exists():
-                file_path = test_path
-                break
-        
-        # 如果还没找到，按文件名搜索
+        # 如果还没找到，按文件名搜索（限制深度）
         if not file_path or not file_path.exists():
-            for search_dir in [ROOT / "uploads", UPLOAD_DIR, Path("/nas-pool/data/uploads")]:
+            search_dirs = [ROOT / "uploads"]
+            for search_dir in search_dirs:
                 if search_dir.exists():
                     for root, dirs, files in os.walk(search_dir):
+                        # 限制搜索深度
+                        if root.count(os.sep) - str(search_dir).count(os.sep) > 3:
+                            continue
                         if file_name in files:
                             file_path = Path(root) / file_name
                             break
-                if file_path and file_path.exists():
-                    break
-        
-        # 按大小搜索（作为后备）
-        if not file_path or not file_path.exists():
-            for search_dir in [ROOT / "uploads", UPLOAD_DIR]:
-                if search_dir.exists():
-                    for root, dirs, files in os.walk(search_dir):
-                        for f in files:
-                            fp = Path(root) / f
-                            try:
-                                if fp.stat().st_size == file_size:
-                                    file_path = fp
-                                    break
-                            except:
-                                pass
                 if file_path and file_path.exists():
                     break
         
