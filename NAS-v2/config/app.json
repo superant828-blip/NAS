@@ -1,0 +1,14 @@
+{
+  "allowed_extensions": [
+    "jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff", "svg", "ico",
+    "mp4", "mov", "avi", "mkv", "wmv", "flv", "mp3", "wav", "flac", "aac", "ogg", "wma",
+    "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "json", "xml", "html", "css", "js",
+    "zip", "rar", "7z", "tar", "gz", "bz2", "iso", "dmg", "img", "bin",
+    "apk", "exe",
+    "heic", "heif", "avif", "raw", "cr2", "nef", "arw", "dng",
+    "log", "md", "rtf", "odt", "ods", "odp"
+  ],
+  "max_file_size": 524288000,
+  "enable_cache": true,
+  "cache_ttl": 300
+}

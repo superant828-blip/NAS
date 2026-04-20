@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>下载测试</title>
+</head>
+<body>
+    <h1>NAS 下载测试</h1>
+    <div id="token-info">Token: <span id="token">加载中...</span></div>
+    <div id="status"></div>
+    <button onclick="testDownload()">测试下载文件ID=19</button>
+    <button onclick="testDownload63()">测试下载文件ID=63</button>
+    <pre id="result"></pre>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        document.getElementById('token').textContent = token ? token.substring(0, 20) + '...' : '无';
+        
+        async function testDownload() {
+            if (!token) {
+                alert('请先登录！');
+                return;
+            }
+            try {
+                const res = await fetch('http://' + location.host + '/api/v1/files/19/download', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                document.getElementById('status').textContent = '状态: ' + res.status;
+                if (res.ok) {
+                    const blob = await res.blob();
+                    document.getElementById('result').textContent = '下载成功! 大小: ' + blob.size + ' bytes';
+                    // 自动下载
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'test.mp4';
+                    a.click();
+                } else {
+                    document.getElementById('result').textContent = '失败: ' + await res.text();
+                }
+            } catch(e) {
+                document.getElementById('result').textContent = '错误: ' + e.message;
+            }
+        }
+
+        async function testDownload63() {
+            if (!token) {
+                alert('请先登录！');
+                return;
+            }
+            try {
+                const res = await fetch('http://' + location.host + '/api/v1/files/63/download', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                document.getElementById('status').textContent = '状态: ' + res.status;
+                if (res.ok) {
+                    const blob = await res.blob();
+                    document.getElementById('result').textContent = '下载成功! 大小: ' + blob.size + ' bytes';
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'PLM_client.zip';
+                    a.click();
+                }
+            } catch(e) {
+                document.getElementById('result').textContent = '错误: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
