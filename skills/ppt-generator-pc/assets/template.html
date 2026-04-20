@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海尔 COSMOPlat 演示文稿</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: #0a0f1a;
+      color: #fff;
+      overflow: hidden;
+    }
+    .slides-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide {
+      width: 1600px;
+      height: 900px;
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      padding: 60px 80px;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, #0a0f1a 0%, #1a1a2e 100%);
+      overflow: hidden;
+    }
+    .slide.active { opacity: 1; transform: translateX(0); }
+    .slide.prev { opacity: 0; transform: translateX(-100%); }
+    
+    /* 背景装饰 */
+    .bg-gradient {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at top right, rgba(0,102,204,0.15) 0%, transparent 50%),
+                  radial-gradient(ellipse at bottom left, rgba(255,102,0,0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    
+    /* 标题样式 */
+    .slide-title {
+      font-size: 56px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #0066cc 0%, #00aaff 50%, #ff6600 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 24px;
+    }
+    .slide-subtitle {
+      font-size: 28px;
+      color: #9ca3af;
+      font-weight: 300;
+      margin-bottom: 40px;
+    }
+    
+    /* 内容区域 */
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    /* 数据卡片 */
+    .data-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 32px;
+      margin: 16px 0;
+    }
+    .data-number {
+      font-size: 64px;
+      font-weight: 900;
+      color: #ff6600;
+      line-height: 1;
+    }
+    .data-label {
+      font-size: 20px;
+      color: #9ca3af;
+      margin-top: 12px;
+    }
+    
+    /* 列表样式 */
+    .feature-list {
+      list-style: none;
+    }
+    .feature-list li {
+      font-size: 24px;
+      padding: 16px 0;
+      padding-left: 40px;
+      position: relative;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .feature-list li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #0066cc;
+      font-weight: 900;
+    }
+    
+    /* 表格样式 */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 18px;
+    }
+    .comparison-table th {
+      background: rgba(0,102,204,0.2);
+      padding: 20px;
+      text-align: left;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .comparison-table td {
+      padding: 16px 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .comparison-table tr:nth-child(even) {
+      background: rgba(255,255,255,0.02);
+    }
+    .highlight { color: #ff6600; font-weight: 700; }
+    
+    /* 导航 */
+    .nav-indicator {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 100;
+    }
+    .nav-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .nav-dot.active {
+      background: #0066cc;
+      transform: scale(1.3);
+    }
+    
+    /* 页码 */
+    .page-number {
+      position: fixed;
+      bottom: 30px;
+      right: 40px;
+      font-size: 16px;
+      color: #6b7280;
+    }
+    
+    /* 徽章 */
+    .badge {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 8px;
+    }
+    .badge-blue { background: rgba(0,102,204,0.3); color: #00aaff; }
+    .badge-orange { background: rgba(255,102,0,0.3); color: #ff6600; }
+    
+    /* 网格布局 */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+    
+    /* 图标占位 */
+    .icon-box {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+    .icon-blue { background: rgba(0,102,204,0.2); }
+    .icon-orange { background: rgba(255,102,0,0.2); }
+  </style>
+</head>
+<body>
+  <div class="slides-container" id="container">
+    <!-- SLIDES_PLACEHOLDER -->
+  </div>
+  
+  <div class="nav-indicator" id="navIndicator"></div>
+  <div class="page-number" id="pageNumber">1 / 12</div>
+  
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const navIndicator = document.getElementById('navIndicator');
+    const pageNumber = document.getElementById('pageNumber');
+    
+    // 创建导航点
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(i);
+      navIndicator.appendChild(dot);
+    });
+    
+    function updateSlide() {
+      slides.forEach((slide, i) => {
+        slide.classList.remove('active', 'prev');
+        if (i === currentSlide) slide.classList.add('active');
+        else if (i < currentSlide) slide.classList.add('prev');
+      });
+      document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+      });
+      pageNumber.textContent = (currentSlide + 1) + ' / ' + slides.length;
+    }
+    
+    function goToSlide(n) {
+      currentSlide = Math.max(0, Math.min(n, slides.length - 1));
+      updateSlide();
+    }
+    
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+    
+    // 键盘导航
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') nextSlide();
+      else if (e.key === 'ArrowLeft') prevSlide();
+    });
+    
+    // 点击导航
+    document.addEventListener('click', (e) => {
+      const rect = document.body.getBoundingClientRect();
+      if (e.clientX > rect.width / 2) nextSlide();
+      else prevSlide();
+    });
+    
+    updateSlide();
+  </script>
+</body>
+</html>

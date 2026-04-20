@@ -1,0 +1,200 @@
+{
+  "gateway": {
+    "auth": {
+      "mode": "token",
+      "token": "1a856475f3585e1c3f0df507f0f93c94e67cb7407be20b54"
+    },
+    "mode": "local",
+    "port": 18789,
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  },
+  "wizard": {
+    "lastRunAt": "2026-04-20T09:07:00.924Z",
+    "lastRunVersion": "2026.4.15",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.4.15",
+    "lastTouchedAt": "2026-04-20T10:39:15.160Z"
+  },
+  "agents": {
+    "defaults": {
+      "memorySearch": {
+        "enabled": false
+      },
+      "workspace": "/home/test/.openclaw/workspace",
+      "models": {
+        "qwen/qwen3.5-plus": {
+          "alias": "Qwen"
+        },
+        "modelstudio/qwen3.5-plus": {},
+        "qwen/qwen3-max-2026-01-23": {},
+        "modelstudio/qwen3-max-2026-01-23": {},
+        "qwen/qwen3-coder-next": {},
+        "modelstudio/qwen3-coder-next": {},
+        "qwen/qwen3-coder-plus": {},
+        "modelstudio/qwen3-coder-plus": {},
+        "qwen/MiniMax-M2.5": {},
+        "modelstudio/MiniMax-M2.5": {},
+        "qwen/glm-5": {},
+        "modelstudio/glm-5": {},
+        "qwen/glm-4.7": {},
+        "modelstudio/glm-4.7": {},
+        "qwen/kimi-k2.5": {},
+        "modelstudio/kimi-k2.5": {}
+      },
+      "model": {
+        "primary": "qwen/MiniMax-M2.5"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      }
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "tools": {
+    "profile": "coding",
+    "exec": {
+      "host": "gateway",
+      "security": "full",
+      "ask": "off",
+      "safeBins": [
+        "cat",
+        "grep",
+        "wc",
+        "ls",
+        "find",
+        "ping",
+        "exec"
+      ]
+    },
+    "web": {
+      "search": {
+        "provider": "searxng"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "qwen": {
+        "baseUrl": "https://coding.dashscope.aliyuncs.com/v1",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "qwen3.5-plus",
+            "name": "qwen3.5-plus",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 65536
+          },
+          {
+            "id": "qwen3-max-2026-01-23",
+            "name": "qwen3-max-2026-01-23",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 262144,
+            "maxTokens": 65536
+          },
+          {
+            "id": "MiniMax-M2.5",
+            "name": "MiniMax-M2.5",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 1000000,
+            "maxTokens": 65536
+          }
+        ]
+      }
+    }
+  },
+  "auth": {
+    "profiles": {
+      "qwen:default": {
+        "provider": "qwen",
+        "mode": "api_key"
+      }
+    }
+  },
+  "plugins": {
+    "allow": [
+      "dingtalk",
+      "qwen",
+      "memory-core"
+    ],
+    "entries": {
+      "qwen": {
+        "enabled": true
+      },
+      "dingtalk": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "dingtalk": {
+        "source": "path",
+        "sourcePath": "/home/test/openclaw-channel-dingtalk",
+        "installPath": "/home/test/openclaw-channel-dingtalk",
+        "version": "3.5.3"
+      }
+    }
+  },
+  "channels": {
+    "dingtalk": {
+      "enabled": true,
+      "clientId": "ding5fkopeqduzl3mdud",
+      "clientSecret": "tu0ubmla0wlYFXYwd5Qqqx57Osbe5kbpRakKEoD150CkgD306PxqOFiUwQjrLd-S",
+      "dmPolicy": "allowlist",
+      "groupPolicy": "allowlist",
+      "messageType": "card",
+      "allowFrom": [
+        "803871",
+        "800038",
+        "803295",
+        "802509",
+        "804496"
+      ]
+    }
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "skills": {
+    "web-learner": {
+      "version": "1.0.0",
+      "installedAt": 1776416792765
+    },
+    "dingtalk-push": {
+      "version": "0.1.0",
+      "installedAt": 1776676685486
+    }
+  }
+}

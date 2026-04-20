@@ -1,0 +1,27 @@
+{
+  "name": "hermes-model-bridge",
+  "version": "1.0.0",
+  "description": "将 OpenClaw 配置的大模型分享给 Hermes Agent 使用",
+  "main": "hermes-model-bridge.js",
+  "bin": {
+    "hermes-model-bridge": "./hermes-model-bridge.js"
+  },
+  "scripts": {
+    "start": "node hermes-model-bridge.js",
+    "start:mcp": "node hermes-model-bridge.js mcp",
+    "start:api": "node hermes-model-bridge.js api"
+  },
+  "keywords": [
+    "openclaw",
+    "hermes",
+    "ai",
+    "model",
+    "bridge",
+    "mcp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
