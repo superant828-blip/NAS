@@ -44,6 +44,14 @@ class NASConfig:
     db_type: str = "sqlite"  # sqlite 或 mysql
     db_path: str = "data/nas.db"
     
+    # 上传配置
+    upload_dir: str = "uploads"
+    allowed_extensions: set = None  # 运行时设置
+    
+    def __post_init__(self):
+        if self.allowed_extensions is None:
+            self.allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'pdf', 'doc', 'docx', 'zip', 'rar', 'txt', 'mp3', 'wav', 'apk', 'exe', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'html', 'css', 'js', 'svg', 'ico', 'bmp', 'tiff', 'flac', 'aac', 'ogg', 'wma', 'mov', 'avi', 'mkv', 'wmv', 'flv', '7z', 'tar', 'gz', 'bz2', 'iso', 'dmg', 'img', 'bin'}
+    
     # MySQL 配置
     mysql_host: str = "localhost"
     mysql_port: int = 3306

@@ -157,7 +157,7 @@ class PermissionEngine:
             return PermissionResult(allowed=True, reason="Bypass mode")
         
         if context.permission_mode == PermissionMode.DENY:
-            return PermissionResult(allowed=False, reason="Den y mode")
+            return PermissionResult(allowed=False, reason="Deny mode")
         
         # 3. 只读工具自动放行
         if tool_name in self.READ_ONLY_TOOLS:
@@ -171,7 +171,7 @@ class PermissionEngine:
         # 5. 路径检查
         path = input_data.get("path") or input_data.get("command", "")
         if path:
-            path_result = self._check_path(path, tool_name)
+            path_result = self._check_path(path, tool_name, context.allowed_paths if hasattr(context, 'allowed_paths') else None)
             if not path_result.allowed:
                 return path_result
         
@@ -221,7 +221,7 @@ class PermissionEngine:
         
         return PermissionResult(allowed=True)
     
-    def _check_path(self, path: str, tool_name: str) -> PermissionResult:
+    def _check_path(self, path: str, tool_name: str, allowed_paths: List[str] = None) -> PermissionResult:
         """路径访问检查"""
         # 检查危险目录
         for danger_dir in self.DANGEROUS_DIRECTORIES:
@@ -234,7 +234,7 @@ class PermissionEngine:
         # 路径遍历检查
         if ".." in path:
             # 检查是否逃离允许目录
-            if not any(path.startswith(allowed) for allowed in context.allowed_paths):
+            if allowed_paths and not any(path.startswith(allowed) for allowed in allowed_paths):
                 return PermissionResult(
                     allowed=False,
                     reason="Path traversal detected"

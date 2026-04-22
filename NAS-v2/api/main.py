@@ -59,12 +59,14 @@ from api.routes.system import router as system_router
 
 
 # ==================== 配置 ====================
-UPLOAD_DIR = Path("/nas-pool/data/uploads")
+# 使用配置中的上传目录
+UPLOAD_DIR = ROOT / config.upload_dir
 UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 for subdir in ['files', 'photos', 'thumbs']:
     (UPLOAD_DIR / subdir).mkdir(exist_ok=True)
 
-ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'pdf', 'doc', 'docx', 'zip', 'rar', 'txt', 'mp3', 'wav', 'apk', 'exe', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'html', 'css', 'js', 'svg', 'ico', 'bmp', 'tiff', 'flac', 'aac', 'ogg', 'wma', 'mov', 'avi', 'mkv', 'wmv', 'flv', '7z', 'tar', 'gz', 'bz2', 'iso', 'dmg', 'img', 'bin'}
+# 从配置获取允许的扩展名
+ALLOWED_EXTENSIONS = config.allowed_extensions or {'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'pdf', 'doc', 'docx', 'zip', 'rar', 'txt', 'mp3', 'wav', 'apk', 'exe', 'csv', 'xls', 'xlsx', 'ppt', 'pptx', 'json', 'xml', 'html', 'css', 'js', 'svg', 'ico', 'bmp', 'tiff', 'flac', 'aac', 'ogg', 'wma', 'mov', 'avi', 'mkv', 'wmv', 'flv', '7z', 'tar', 'gz', 'bz2', 'iso', 'dmg', 'img', 'bin'}
 
 # 应用配置
 import json
