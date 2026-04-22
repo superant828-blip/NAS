@@ -71,15 +71,15 @@ async def get_current_user_id(request: Request) -> int:
 
 @router.get("/")
 async def list_files(
+    request: Request,
     path: str = Query("/"),
     parent_id: Optional[int] = Query(None),
     sort_by: str = Query("name"),
     order: str = Query("asc"),
-    view: str = Query("grid"),
-    authorization: str = Query(None)
+    view: str = Query("grid")
 ):
     """获取文件列表"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -106,9 +106,9 @@ async def list_files(
 
 
 @router.get("/{file_id}")
-async def get_file(file_id: int, authorization: str = Query(None)):
+async def get_file(request: Request, file_id: int):
     """获取文件详情"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -126,13 +126,13 @@ async def get_file(file_id: int, authorization: str = Query(None)):
 
 @router.post("/folder")
 async def create_folder(
+    request: Request,
     name: str = Form(...),
     parent_id: Optional[int] = Form(None),
-    path: str = Form("/"),
-    authorization: str = Query(None)
+    path: str = Form("/")
 ):
     """创建文件夹"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -155,13 +155,13 @@ async def create_folder(
 
 @router.post("/upload")
 async def upload_file(
+    request: Request,
     file: UploadFile = FastAPIFile(...),
     path: str = Form("/"),
-    parent_id: Optional[int] = Form(None),
-    authorization: str = Query(None)
+    parent_id: Optional[int] = Form(None)
 ):
     """上传文件"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     try:
         # 确保目录存在
@@ -262,11 +262,11 @@ async def download_file(
 
 @router.delete("/{file_id}")
 async def delete_file(
-    file_id: int,
-    authorization: str = Query(None)
+    request: Request,
+    file_id: int
 ):
     """删除文件"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -293,12 +293,12 @@ async def delete_file(
 
 @router.put("/{file_id}/rename")
 async def rename_file(
+    request: Request,
     file_id: int,
-    name: str,
-    authorization: str = Query(None)
+    name: str
 ):
     """重命名文件"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -316,13 +316,13 @@ async def rename_file(
 
 @router.put("/{file_id}/move")
 async def move_file(
+    request: Request,
     file_id: int,
     parent_id: Optional[int] = None,
-    path: Optional[str] = None,
-    authorization: str = Query(None)
+    path: Optional[str] = None
 ):
     """移动文件"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
@@ -341,11 +341,11 @@ async def move_file(
 # 文件搜索
 @router.get("/search/all")
 async def search_files(
-    q: str = Query(..., min_length=1),
-    authorization: str = Query(None)
+    request: Request,
+    q: str = Query(..., min_length=1)
 ):
     """搜索文件"""
-    user_id = await get_current_user_id(authorization)
+    user_id = await get_current_user_id(request)
     
     conn = get_file_db()
     try:
