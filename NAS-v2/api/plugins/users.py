@@ -40,7 +40,34 @@ class UserCreate(BaseModel):
     
     @field_validator('role')
     def validate_role(cls, v):
-        allowed = ['user', 'admin', 'guest']
+        allowed = ['user', 'admin', 'guest', 'manager']  # 添加 manager
+        if v not in allowed:
+            raise ValueError(f"Invalid role. Allowed: {allowed}")
+        return v
+
+
+class UserUpdate(BaseModel):
+    """用户更新模型"""
+    username: Optional[constr(min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_-]+$')] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    enabled: Optional[bool] = None
+    
+    @field_validator('email')
+    def validate_email(cls, v):
+        if v is None:
+            return v
+        from core.security import InputValidator
+        result = InputValidator.validate_email(v)
+        if not result.valid:
+            raise ValueError(result.message)
+        return v
+    
+    @field_validator('role')
+    def validate_role(cls, v):
+        if v is None:
+            return v
+        allowed = ['user', 'admin', 'guest', 'manager']  # 添加 manager
         if v not in allowed:
             raise ValueError(f"Invalid role. Allowed: {allowed}")
         return v
@@ -57,6 +84,11 @@ class PasswordChange(BaseModel):
         if not result.valid:
             raise ValueError(result.message)
         return v
+
+
+class ProfileUpdate(BaseModel):
+    """个人资料更新模型"""
+    username: Optional[constr(min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_-]+$')] = None
 
 
 # ==================== 依赖注入 ====================
@@ -151,3 +183,68 @@ async def change_password(password_data: PasswordChange, current_user: User = De
         raise HTTPException(status_code=400, detail=result.get("message"))
     
     return result
+
+
+@router.put("/me")
+async def update_profile(profile_data: ProfileUpdate, current_user: User = Depends(get_current_user)):
+    """更新个人资料"""
+    update_fields = {}
+    
+    if profile_data.username is not None:
+        update_fields['username'] = profile_data.username
+    
+    if update_fields:
+        result = auth_manager.update_user(current_user.id, update_fields)
+        if result["status"] != "success":
+            raise HTTPException(status_code=400, detail=result.get("message"))
+    
+    # 返回更新后的用户信息
+    user = auth_manager.get_user(user_id=current_user.id)
+    return {
+        "status": "success",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role
+        }
+    }
+
+
+@router.put("/{user_id}")
+async def update_user(user_id: int, user_data: UserUpdate, current_user: User = Depends(require_admin)):
+    """更新用户 (管理员)"""
+    # 不允许修改自己的管理员角色
+    if user_id == current_user.id and user_data.role is not None:
+        raise HTTPException(status_code=400, detail="Cannot change your own role")
+    
+    update_fields = {}
+    
+    if user_data.username is not None:
+        update_fields['username'] = user_data.username
+    if user_data.email is not None:
+        update_fields['email'] = user_data.email
+    if user_data.role is not None:
+        update_fields['role'] = user_data.role
+    if user_data.enabled is not None:
+        update_fields['enabled'] = user_data.enabled
+    
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    result = auth_manager.update_user(user_id, update_fields)
+    
+    if result["status"] != "success":
+        raise HTTPException(status_code=400, detail=result.get("message"))
+    
+    user = auth_manager.get_user(user_id=user_id)
+    return {
+        "status": "success",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "enabled": user.enabled
+        }
+    }

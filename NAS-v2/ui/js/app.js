@@ -71,7 +71,8 @@ createApp({
             expires: 0, password: '', username: '' 
         });
         const snapshotForm = ref({ dataset: '', name: '' });
-        const userForm = ref({ email: '', username: '', password: '', role: 'user' });
+        const userForm = ref({ email: '', username: '', password: '', role: 'user', id: null });
+        const editingUserId = ref(null);
         const newFolderName = ref('');
         const createLinkForm = ref({ fileId: '', expires: 0 });
         
@@ -1439,6 +1440,34 @@ createApp({
                 alert('登录已过期，请重新登录'); return;
             }
             
+            // 如果是编辑模式
+            if (editingUserId.value) {
+                const updateData = {
+                    email: userForm.value.email,
+                    username: userForm.value.username,
+                    role: userForm.value.role
+                };
+                
+                const res = await fetch(API_BASE + '/users/' + editingUserId.value, {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + token.value, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                });
+                
+                if (res.ok) {
+                    showUserModal.value = false;
+                    userForm.value = { email: '', username: '', password: '', role: 'user', id: null };
+                    editingUserId.value = null;
+                    loadUsers();
+                    showToast('用户更新成功', 'success');
+                } else {
+                    const err = await res.json();
+                    alert('更新失败: ' + (err.detail || err.message || JSON.stringify(err)));
+                }
+                return;
+            }
+            
+            // 创建新用户
             if (!userForm.value.email || !userForm.value.username || !userForm.value.password) {
                 alert('请填写完整信息'); return;
             }
@@ -1456,7 +1485,7 @@ createApp({
             
             if (res.ok) {
                 showUserModal.value = false;
-                userForm.value = { email: '', username: '', password: '', role: 'user' };
+                userForm.value = { email: '', username: '', password: '', role: 'user', id: null };
                 loadUsers();
                 showToast('用户创建成功', 'success');
             } else if (res.status === 401) {
@@ -1466,6 +1495,19 @@ createApp({
                 const msg = err.detail || err.message || JSON.stringify(err);
                 alert('创建失败: ' + msg);
             }
+        };
+        
+        // 编辑用户
+        const editUser = (user) => {
+            userForm.value = {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                password: '',
+                role: user.role
+            };
+            editingUserId.value = user.id;
+            showUserModal.value = true;
         };
         
         const deleteUser = async (id) => {
@@ -1600,7 +1642,7 @@ createApp({
             loadAlbums, handlePhotoUpload, createAlbum, viewAlbum,
             
             // 用户
-            loadUsers, createUser, deleteUser, updateProfile, changePassword, loadConfig, saveAllowedExtensions, canAccess,
+            loadUsers, createUser, deleteUser, editUser, updateProfile, changePassword, loadConfig, saveAllowedExtensions, canAccess,
             
             // 任务
             loadJobs, cancelJob, getJobTypeIcon, getJobStatusClass, getJobStatusText,

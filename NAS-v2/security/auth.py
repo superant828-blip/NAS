@@ -833,6 +833,58 @@ class AuthManager:
                 return {"status": "error", "message": str(e)}
             finally:
                 conn.close()
+    
+    def update_user(self, user_id: int, updates: Dict) -> Dict:
+        """更新用户信息"""
+        if not updates:
+            return {"status": "error", "message": "No fields to update"}
+        
+        # 构建动态更新
+        set_clauses = []
+        params = []
+        
+        allowed_fields = ['username', 'email', 'role', 'enabled']
+        for key, value in updates.items():
+            if key in allowed_fields:
+                set_clauses.append(key)
+                if key == 'enabled':
+                    params.append(1 if value else 0)
+                else:
+                    params.append(value)
+        
+        if not set_clauses:
+            return {"status": "error", "message": "No valid fields to update"}
+        
+        params.append(user_id)
+        
+        # 根据数据库类型选择占位符
+        placeholder = '%s' if config.db_type == 'mysql' else '?'
+        set_sql = ', '.join([f'{col} = {placeholder}' for col in set_clauses])
+        
+        if config.db_type == "mysql":
+            conn = self._get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    sql = f"UPDATE users SET {set_sql} WHERE id = %s"
+                    cursor.execute(sql, params)
+                    conn.commit()
+                    return {"status": "success"}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+            finally:
+                conn.close()
+        else:
+            import sqlite3
+            conn = sqlite3.connect(config.db_path)
+            try:
+                sql = f"UPDATE users SET {set_sql} WHERE id = ?"
+                conn.execute(sql, params)
+                conn.commit()
+                return {"status": "success"}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+            finally:
+                conn.close()
 
     # ==================== 分享链接 CRUD ====================
     

@@ -1996,6 +1996,7 @@
                                         }">{{ u.role==='admin' ? '管理员' : u.role==='manager' ? '经理' : u.role==='guest' ? '访客' : '用户' }}</span></td>
                                         <td>{{ u.created_at }}</td>
                                         <td>
+                                            <button v-if="currentUser.role === 'admin'" class="toolbar-btn" style="background:var(--info);border-color:var(--info);color:white;margin-right:5px" @click="editUser(u)">编辑</button>
                                             <button v-if="u.id !== currentUser.id" class="toolbar-btn" style="background:var(--danger);border-color:var(--danger);color:white" @click="deleteUser(u.id)">删除</button>
                                         </td>
                                     </tr>
@@ -2392,8 +2393,8 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">添加用户</h5>
-                        <button type="button" class="btn-close" @click="showUserModal = false"></button>
+                        <h5 class="modal-title">{{ editingUserId ? '编辑用户' : '添加用户' }}</h5>
+                        <button type="button" class="btn-close" @click="showUserModal = false; userForm = {email:'',username:'',password:'',role:'user',id:null}; editingUserId = null"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
@@ -2404,15 +2405,19 @@
                             <label class="form-label">用户名</label>
                             <input type="text" class="form-control" v-model="userForm.username">
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3" v-if="!editingUserId">
                             <label class="form-label">密码</label>
-                            <input type="password" class="form-control" v-model="userForm.password">
+                            <input type="password" class="form-control" v-model="userForm.password" placeholder="至少8个字符">
+                        </div>
+                        <div class="mb-3" v-else>
+                            <label class="form-label">新密码 (留空不变)</label>
+                            <input type="password" class="form-control" v-model="userForm.password" placeholder="留空则不修改密码">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">角色</label>
                             <select class="form-control" v-model="userForm.role">
                                 <option value="admin">管理员 (全部权限)</option>
-                                <option value="manager">管理员 (部分权限)</option>
+                                <option value="manager">经理 (部分权限)</option>
                                 <option value="user">普通用户</option>
                                 <option value="guest">访客 (只读)</option>
                             </select>
@@ -2426,8 +2431,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @click="showUserModal = false">取消</button>
-                        <button type="button" class="btn btn-primary" @click="createUser">创建</button>
+                        <button type="button" class="btn btn-secondary" @click="showUserModal = false; userForm = {email:'',username:'',password:'',role:'user',id:null}; editingUserId = null">取消</button>
+                        <button type="button" class="btn btn-primary" @click="createUser">{{ editingUserId ? '保存' : '创建' }}</button>
                     </div>
                 </div>
             </div>
