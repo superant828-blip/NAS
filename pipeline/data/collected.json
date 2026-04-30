@@ -1,0 +1,888 @@
+{
+  "runAt": "2026-04-30T10:05:16.724Z",
+  "date": "2026-04-30",
+  "keywords": [
+    "AI",
+    "寻求报道",
+    "今年五一",
+    "“社恐型酒店”火了",
+    "8点1氪丨百度废除字母职级标签",
+    "Meta被曝准备撤销对Manus收购",
+    "张雪称曾拒绝了半个亿的商务合作",
+    "8点1氪丨官方通报“霸王茶姬中喝出水银”",
+    "马斯克称创办OpenAI只为拯救人类",
+    "三星家族财富一年翻倍至3000亿跃居亚洲第三"
+  ],
+  "sources": [
+    "36氪",
+    "华尔街见闻",
+    "发改委",
+    "国家数据局",
+    "新浪财经API"
+  ],
+  "articles": [
+    {
+      "title": "iOS 27发力AI修图，苹果也开始AI焦虑了",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "22小时前",
+      "link": "https://www.36kr.com/p/3787767831026950",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "Harness 时代：海致科技如何定义 AI 的“驾驭工程”",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "8分钟前",
+      "link": "https://www.36kr.com/p/3789107286432777",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "被AI绕过，才是CEO们不敢说的真正恐惧",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "3小时前",
+      "link": "https://www.36kr.com/p/3788813975723014",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "AI集体涨价后，打工人反而「赢麻」了？",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "6小时前",
+      "link": "https://www.36kr.com/p/3788621700685065",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "2026Q1海外AI剧、漫剧增长率700%，NetShort领跑，占比50%",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "45分钟前",
+      "link": "https://www.36kr.com/p/3788967460729604",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "AI霸总，一门被低估的“情感生意”",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "5小时前",
+      "link": "https://www.36kr.com/p/3787856471416066",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "AI模型和Agent创新，倒逼AI Infra产生了哪些创业机会？",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "20小时前",
+      "link": "https://www.36kr.com/p/3787679275441413",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "红杉 AI 大会2026：工作方式，彻底变了",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "7小时前",
+      "link": "https://www.36kr.com/p/3788572819463172",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "引发众怒前，爱奇艺已经搞了12年AI",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "3小时前",
+      "link": "https://www.36kr.com/p/3788816521551111",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "对话陈宇新：AI正在“吃掉”品牌溢价？",
+      "source": "36氪",
+      "keyword": "AI",
+      "meta": "5小时前",
+      "link": "https://www.36kr.com/p/3788787190373381",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:32.908Z"
+    },
+    {
+      "title": "基于CIEDE2000的通信线缆线序智能检测系统，寻求报道",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-04-22",
+      "link": "https://www.36kr.com/p/3766437940445696",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "晶力技术以AI视觉解服装制造业质检痛点，寻求报道",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-04-22",
+      "link": "https://www.36kr.com/p/3769189395809026",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "想要寻求报道？别让你的竞争对手比你早知道这些",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2015-10-22",
+      "link": "https://www.36kr.com/p/1720954224641",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "宁德时代、智元、银河通用联合投资，六维力传感器头部企业「蓝点触控」完成超亿元C+轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-04-14",
+      "link": "https://www.36kr.com/p/3766434507440903",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "拿下半导体领域关键客户粉体材料采购订单，「矽瓷新能」完成数千万元A轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-03-17",
+      "link": "https://www.36kr.com/p/3726836407859591",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "生产速度提升四倍，推出桌面级金属3D打印机，「融速科技」完成近亿元A轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-03-25",
+      "link": "https://www.36kr.com/p/3738196912881927",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "目标氢能及液流电池市场，实现AEM材料性能突破，「志青博材」获融科储能领投千万元天使+轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-03-27",
+      "link": "https://www.36kr.com/p/3740569636962566",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "AI光伏领域粉体需求爆发，业绩持续增长，「新川电子」获近亿元pre-IPO轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-02-25",
+      "link": "https://www.36kr.com/p/3698117482212997",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "十余款“免充电”产品亮相CES，消费级钙钛矿光能科技企业「炎和科技」完成近亿元A1轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-01-22",
+      "link": "https://www.36kr.com/p/3649991846158729",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "AI+生命科技实现废弃物循环利用，国家级专精特新“重点小巨人”「蔚复来」完成数千万元C2轮融资 | 36氪首发",
+      "source": "36氪",
+      "keyword": "寻求报道",
+      "meta": "2026-03-05",
+      "link": "https://www.36kr.com/p/3709819839443333",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:37.558Z"
+    },
+    {
+      "title": "今年五一，“社恐型酒店”火了",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "昨天",
+      "link": "https://www.36kr.com/p/3787376421264644",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "加速包失灵、第三方崩盘，今年五一出行你抢到火车票了么？",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2026-04-21",
+      "link": "https://www.36kr.com/p/3775961915998978",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一，外国人撑起消费一片天",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2025-05-07",
+      "link": "https://www.36kr.com/p/3281968476185223",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一，比“反向旅游”更火的趋势出现了",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2025-04-29",
+      "link": "https://www.36kr.com/p/3270694367289472",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一，中国赴日本旅游风向悄悄变了",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2025-04-23",
+      "link": "https://www.36kr.com/p/3262412327151107",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一，玩命穷游的游客薅秃了多少城市？",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2025-05-07",
+      "link": "https://www.36kr.com/p/3281863329718919",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一，打工人挤爆小县城",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2024-04-23",
+      "link": "https://www.36kr.com/p/2745529224952838",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一假期自驾出行，充电还会难吗？",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2024-04-30",
+      "link": "https://www.36kr.com/p/2755287310253057",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一出游，人均“特种兵”",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2023-04-27",
+      "link": "https://www.36kr.com/p/2233544152133507",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "今年五一我必须要去旅行，走起",
+      "source": "36氪",
+      "keyword": "今年五一",
+      "meta": "2023-04-21",
+      "link": "https://www.36kr.com/p/2224497002395136",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:42.186Z"
+    },
+    {
+      "title": "美军拟打击伊朗，油价飙至四年高位，纳指期货回吐涨幅，亚洲货币跳水，全球债市齐跌",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771356",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "美军拟以“高超音速导弹”打击伊朗，周四将向特朗普汇报新“打击计划”",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771344",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "谷歌：云业务\"狂飙\"碾压对手，但1900亿资本开支才是真正的豪赌",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771393",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "“下次不再见”！鲍威尔谢幕：一个“外行”掌舵美联储最动荡的八年",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771381",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "快讯 “私募魔女”李蓓买入18倍牛股？此“李蓓”非彼“李蓓”",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097392",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "低息周期下换帅：招行王良退休，王小青执掌“零售之王”",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771392",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "欧元区经济意外放缓，一季度GDP同比初值0.8%低于预期，德法经济分化",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771389",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "快讯 江西铜业：拟筹划分拆江铜铜箔至香港联合交易所上市",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097379",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "快讯 中国央行开展3000亿元期限为3个月的买断式逆回购操作",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097377",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "地缘冲突下的能源权力重构：美国迈向全球能源主导地位？",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/member/articles/3771168",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "快讯 中央网信办部署开展“清朗·整治AI应用乱象”专项行动",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097365",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "片仔癀增长神话终结？收入、利润双失速",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771390",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "日元升破160，日本财务大臣：接近采取大胆行动的时点，汇率保卫战一触即发！",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771380",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "体内CAR-T，进入融资验证期",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771207",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "快讯 美国加州汽油价格自2023年以来首次突破每加仑6美元。",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097350",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.601Z"
+    },
+    {
+      "title": "全球经济站上\"十字路口\"——当能源冲击逼近临界点",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771387",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "从T表出发：拆解美元流动性与全球资产定价的第一性原理",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/member/articles/3771388",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "OpenAI“星际之门”项目是如何拖垮甲骨文的？",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771386",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "快讯 今年第二批超长期特别国债支持设备更新资金已下达",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097339",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "快讯 SK海力士考虑最早于7月在美国上市，可能募资超过100亿美元。（IFR国际金融评论）",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097335",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "4月收官！沪指站稳4100点，科创50指数大涨25%，芯片半导体爆发，寒武纪重夺股王宝座",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771338",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "菜鸟国际化布局不休：在欧洲连续拿下大仓库",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771384",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "快讯 中国人民银行：3月末境外机构和个人持有境内股票37149.80亿元，2月末为41654.96亿元。",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/livenews/3097323",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "“你的AI账单会很可怕！”科技评论家：美国大厂烧钱打广告，最后都让用户买单",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771377",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "应收账款近乎翻倍、净利大跌近四成，小熊电器一季报透出哪些隐忧？",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771376",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "顾家家居一季报收入微增至50亿，价格战拖累利润中枢下移",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771375",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "三星电话会：“目前传统DRAM比HBM更赚钱”，2027年内存缺口将“进一步扩大”",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771367",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "寒武纪一季报“炸裂”，更关键的是商业客户开始接力，护城河正在显现",
+      "source": "华尔街见闻",
+      "keyword": "",
+      "meta": "",
+      "link": "https://wallstreetcn.com/articles/3771371",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:04:50.602Z"
+    },
+    {
+      "title": "周海兵副主任会见孟加拉国总理财政和计划顾问提图米尔",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260427_1404911.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "周海兵副主任会见格鲁吉亚经济与可持续发展部长克夫里维什维利",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260427_1404910.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "郑栅洁主任会见空客公司全球首席执行官傅里",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260424_1404870.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "2026年4月21日国内成品油价格下调",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260421_1404789.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "郑栅洁主任主持召开民营企业座谈会 围绕准确把握当前经济形势、积极应对外部环境变化听取意见...",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260420_1404786.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "持续提升国家经济安全保障能力 以新安全格局保障新发展格局",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260420_1404777.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "郑栅洁主任赴怀柔国家实验室调研能源科技创新工作",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260416_1404719.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "国家发展改革委与阿联酋投资部签署关于投资合作的谅解备忘录",
+      "source": "发改委",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.ndrc.gov.cn/xwdt/xwfb/202604/t20260415_1404709.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:04.531Z"
+    },
+    {
+      "title": "国家数据集管理服务平台正式发布",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0429/20260429223349173144038_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "《全国数据资源调查报告（2025年）》正式发布",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0429/20260429164803571173880_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "国家数据局发布《数字中国发展报告（2025年）》",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0429/20260429162826395159001_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "一周年，再出发——国家数据发展研究院一周年回顾",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0425/20260425223150523052424_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "国家发展改革委与莫桑比克有关部门签署三份合作文件",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0422/20260422222733496250122_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "跟人工智能有关，这三个数据，增长很快！",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0420/20260420211409777008933_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "中央广播电视总台国家安全主题公益广告《国之安 民之福》",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0415/20260415190239098954885_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "今晚开播！中央广播电视总台重磅播出《筑牢更加坚固的国家安全屏障》专题片",
+      "source": "国家数据局",
+      "keyword": "",
+      "meta": "",
+      "link": "https://www.nda.gov.cn/sjj/swdt/xwfb/0415/20260415190014161502639_pc.html",
+      "confidence": "title_only",
+      "date": "2026-04-30T10:05:14.945Z"
+    },
+    {
+      "title": "寒武纪(sh688256) ¥1699.96 +20% 成交¥284.66亿 🔴涨停",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:34:59",
+      "link": "https://finance.sina.com.cn/realstock/company/sh688256/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sh688256",
+        "name": "寒武纪",
+        "open": 1475,
+        "yesterdayClose": 1416.63,
+        "current": 1699.96,
+        "high": 1699.96,
+        "low": 1475,
+        "change": 283.33,
+        "changePct": 20,
+        "volume": 17884265,
+        "turnoverYi": 284.66,
+        "date": "2026-04-30",
+        "time": "15:34:59",
+        "isLimitUp": true,
+        "source": "新浪财经API"
+      }
+    },
+    {
+      "title": "海光信息(sh688041) ¥296.25 +6.27% 成交¥143.91亿 🟢",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:34:59",
+      "link": "https://finance.sina.com.cn/realstock/company/sh688041/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sh688041",
+        "name": "海光信息",
+        "open": 284.9,
+        "yesterdayClose": 278.77,
+        "current": 296.25,
+        "high": 302.68,
+        "low": 284.88,
+        "change": 17.48,
+        "changePct": 6.27,
+        "volume": 48909295,
+        "turnoverYi": 143.91,
+        "date": "2026-04-30",
+        "time": "15:34:59",
+        "isLimitUp": false,
+        "source": "新浪财经API"
+      }
+    },
+    {
+      "title": "金山办公(sh688111) ¥251.94 +1.08% 成交¥21.99亿 🟢",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:34:59",
+      "link": "https://finance.sina.com.cn/realstock/company/sh688111/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sh688111",
+        "name": "金山办公",
+        "open": 250,
+        "yesterdayClose": 249.26,
+        "current": 251.94,
+        "high": 254.82,
+        "low": 249.4,
+        "change": 2.68,
+        "changePct": 1.08,
+        "volume": 8709056,
+        "turnoverYi": 21.99,
+        "date": "2026-04-30",
+        "time": "15:34:59",
+        "isLimitUp": false,
+        "source": "新浪财经API"
+      }
+    },
+    {
+      "title": "宁德时代(sz300750) ¥436 -2.02% 成交¥131.27亿 🔴",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:35:30",
+      "link": "https://finance.sina.com.cn/realstock/company/sz300750/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sz300750",
+        "name": "宁德时代",
+        "open": 446.5,
+        "yesterdayClose": 445,
+        "current": 436,
+        "high": 449.5,
+        "low": 436,
+        "change": -9,
+        "changePct": -2.02,
+        "volume": 29812094,
+        "turnoverYi": 131.27,
+        "date": "2026-04-30",
+        "time": "15:35:30",
+        "isLimitUp": false,
+        "source": "新浪财经API"
+      }
+    },
+    {
+      "title": "科创50(sh000688) ¥1571.0652 +5.19% 成交¥1433.69亿 🟢",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:35:35",
+      "link": "https://finance.sina.com.cn/realstock/company/sh000688/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sh000688",
+        "name": "科创50",
+        "open": 1511.3875,
+        "yesterdayClose": 1493.5045,
+        "current": 1571.0652,
+        "high": 1580.515,
+        "low": 1511.3875,
+        "change": 77.56,
+        "changePct": 5.19,
+        "volume": 15109612,
+        "turnoverYi": 1433.69,
+        "date": "2026-04-30",
+        "time": "15:35:35",
+        "isLimitUp": false,
+        "source": "新浪财经API"
+      }
+    },
+    {
+      "title": "上证指数(sh000001) ¥4112.1593 +0.11% 成交¥12761.95亿 🟢",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:30:39",
+      "link": "https://finance.sina.com.cn/realstock/company/sh000001/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sh000001",
+        "name": "上证指数",
+        "open": 4107.2974,
+        "yesterdayClose": 4107.5144,
+        "current": 4112.1593,
+        "high": 4118.7552,
+        "low": 4100.9656,
+        "change": 4.64,
+        "changePct": 0.11,
+        "volume": 656912728,
+        "turnoverYi": 12761.95,
+        "date": "2026-04-30",
+        "time": "15:30:39",
+        "isLimitUp": false,
+        "source": "新浪财经API"
+      }
+    },
+    {
+      "title": "创业板指(sz399006) ¥3677.148 -0.27% 成交¥6380.61亿 🔴",
+      "source": "新浪财经API",
+      "keyword": "",
+      "meta": "2026-04-30 15:00:03",
+      "link": "https://finance.sina.com.cn/realstock/company/sz399006/nc.shtml",
+      "confidence": "verified",
+      "date": "2026-04-30T10:05:16.723Z",
+      "stock": {
+        "code": "sz399006",
+        "name": "创业板指",
+        "open": 3704.109,
+        "yesterdayClose": 3687.168,
+        "current": 3677.148,
+        "high": 3718.399,
+        "low": 3660.219,
+        "change": -10.02,
+        "changePct": -0.27,
+        "volume": 20180814133,
+        "turnoverYi": 6380.61,
+        "date": "2026-04-30",
+        "time": "15:00:03",
+        "isLimitUp": false,
+        "source": "新浪财经API"
+      }
+    }
+  ],
+  "stats": {
+    "total": 81,
+    "total_raw": 81,
+    "by_source": {
+      "36氪": 30,
+      "华尔街见闻": 28,
+      "发改委": 8,
+      "国家数据局": 8,
+      "新浪财经API": 7
+    },
+    "by_confidence": {
+      "verified": 7,
+      "title_only": 74
+    }
+  }
+}
