@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * pipeline/stage2-collect.js v3 - 采集阶段（重构版）
+ * pipeline/stage2-collect.js v4 - 采集阶段（优化版）
  *
  * 改进：
  * - 提取通用采集函数，消除重复代码
@@ -9,6 +9,9 @@
  * - 新浪API：实时获取7只科技股/指数行情
  * - 去重：按标题前40字去重
  * - 置信度标注：每条数据标注可信度
+ * - P0: try-finally 确保浏览器关闭
+ * - P1: 配置外部化
+ * - P2: 结构化日志
  */
 import { chromium } from 'playwright';
 import fs from 'fs';
@@ -16,12 +19,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { getTechStocks } from './lib/sina-stock.js';
 import { withRetry, deduplicateByTitle, deduplicateByUrl, stats, writeJSON, DATA_DIR } from './lib/common.js';
+import { info, warn, error, success } from './lib/logger.js';
+import { CONFIG } from './config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// 36氪搜索关键词（取前3个）
-const MAX_36KR_KEYWORDS = 3;
-const MAX_ARTICLES_PER_KEYWORD = 10;
 
 /**
  * 通用站点采集函数
@@ -37,7 +38,6 @@ async function collectSite(page, { url, name, maxItems, domain, wait = 'networki
   const articles = await page.evaluate((domain) => {
     const links = document.querySelectorAll('a');
     const results = [];
-    // 杂质模式：纯作者名+时间戳、导航词
     const navWords = /^(首页|登录|注册|关于|帮助|政策|条款|更多|全部|分类|频道|导航|菜单|搜索|切换|返回|顶部|底部|侧边)/;
     const noisePattern = /^(\S{1,6})\s*(刚刚|\d{1,2}:\d{2}|\d{1,2}小时前|\d{4}-\d{2}-\d{2})\s*$/;
     links.forEach(a => {
@@ -45,12 +45,9 @@ async function collectSite(page, { url, name, maxItems, domain, wait = 'networki
       if (!raw || raw.length < 8) return;
       const href = a.href || '';
       if (raw.includes('javascript') || (domain && !href.includes(domain))) return;
-      // 取第一段（去掉换行后的作者/时间后缀）
       const title = raw.split('\n')[0].trim();
       if (title.length < 8) return;
-      // 过滤导航/菜单
       if (navWords.test(title)) return;
-      // 过滤纯作者+时间戳的垃圾行
       if (noisePattern.test(title)) return;
       results.push({ title, link: href });
     });
@@ -78,7 +75,7 @@ async function collectSite(page, { url, name, maxItems, domain, wait = 'networki
  */
 async function collect36kr(page, keyword) {
   const url = `https://www.36kr.com/search/articles/${encodeURIComponent(keyword)}`;
-  console.log(`  🔍 36氪: "${keyword}"`);
+  info(`36氪搜索: "${keyword}"`);
 
   try {
     await withRetry(
@@ -103,7 +100,7 @@ async function collect36kr(page, keyword) {
       return results;
     });
 
-    const items = articles.slice(0, MAX_ARTICLES_PER_KEYWORD).map(a => ({
+    const items = articles.slice(0, CONFIG.maxArticlesPerKeyword).map(a => ({
       title: a.title,
       source: '36氪',
       keyword,
@@ -113,10 +110,10 @@ async function collect36kr(page, keyword) {
       date: new Date().toISOString(),
     }));
 
-    console.log(`    ✅ ${items.length} 条`);
+    success(`36氪 "${keyword}"`, `${items.length} 条`);
     return items;
   } catch (e) {
-    console.log(`    ⚠️ ${e.message}`);
+    warn(`36氪 "${keyword}" 失败`, e.message);
     return [];
   }
 }
@@ -124,97 +121,91 @@ async function collect36kr(page, keyword) {
 async function collect() {
   const topicsFile = path.join(DATA_DIR, 'topics.json');
   if (!fs.existsSync(topicsFile)) {
-    console.log('❌ 没有选题数据，请先运行 Stage 1');
+    error('没有选题数据，请先运行 Stage 1');
     process.exit(1);
   }
   const topics = JSON.parse(fs.readFileSync(topicsFile, 'utf-8'));
   const keywords = topics.keywords || [];
-  console.log(`📡 开始采集: ${keywords.length} 个关键词`);
+  info('开始采集', `${keywords.length} 个关键词`);
 
-  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-  const page = await browser.newPage();
-  const allArticles = [];
-
-  // === 36氪搜索 ===
-  for (const kw of keywords.slice(0, MAX_36KR_KEYWORDS)) {
-    const items = await collect36kr(page, kw);
-    allArticles.push(...items);
-  }
-
-  // === 通用站点采集（消除重复代码）===
-  const sites = [
-    { url: 'https://wallstreetcn.com/', name: '华尔街见闻', maxItems: 50, delay: 2000 },
-    { url: 'https://www.ndrc.gov.cn/', name: '发改委', maxItems: 8, domain: 'ndrc' },
-    { url: 'https://www.nda.gov.cn/', name: '国家数据局', maxItems: 8, domain: 'nda' },
-  ];
-
-  for (const site of sites) {
-    console.log(`  🔍 ${site.name}`);
-    try {
-      const items = await collectSite(page, site);
-      allArticles.push(...items);
-      console.log(`    ✅ ${items.length} 条`);
-    } catch (e) {
-      console.log(`    ⚠️ ${e.message}`);
-    }
-  }
-
-  await browser.close();
-
-  // === 新浪行情API（100%可核实）===
-  console.log(`  📈 新浪行情API`);
+  let browser;
   try {
-    const stocks = await getTechStocks();
-    for (const s of stocks) {
-      const emoji = s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴';
-      allArticles.push({
-        title: `${s.name}(${s.code}) ¥${s.current} ${s.change > 0 ? '+' : ''}${s.changePct}% 成交¥${s.turnoverYi}亿 ${emoji}`,
-        source: '新浪财经API',
-        keyword: '',
-        meta: `${s.date} ${s.time}`,
-        link: `https://finance.sina.com.cn/realstock/company/${s.code}/nc.shtml`,
-        confidence: 'verified',
-        date: new Date().toISOString(),
-        stock: s,
-      });
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    const allArticles = [];
+
+    // === 36氪搜索 ===
+    for (const kw of keywords.slice(0, CONFIG.max36krKeywords)) {
+      const items = await collect36kr(page, kw);
+      allArticles.push(...items);
     }
-    console.log(`    ✅ ${stocks.length} 条行情`);
-    for (const s of stocks) {
-      const emoji = s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴';
-      console.log(`      ${s.name}: ¥${s.current} ${s.change > 0 ? '+' : ''}${s.changePct}% ${emoji}`);
+
+    // === 通用站点采集 ===
+    for (const site of CONFIG.sites) {
+      info(`采集 ${site.name}`);
+      try {
+        const items = await collectSite(page, site);
+        allArticles.push(...items);
+        success(`${site.name} 采集完成`, `${items.length} 条`);
+      } catch (e) {
+        warn(`${site.name} 采集失败`, e.message);
+      }
     }
-  } catch (e) {
-    console.log(`    ⚠️ ${e.message}`);
+
+    // === 新浪行情API ===
+    info('新浪行情API');
+    try {
+      const stocks = await getTechStocks();
+      for (const s of stocks) {
+        const emoji = s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴';
+        allArticles.push({
+          title: `${s.name}(${s.code}) ¥${s.current} ${s.change > 0 ? '+' : ''}${s.changePct}% 成交¥${s.turnoverYi}亿 ${emoji}`,
+          source: '新浪财经API',
+          keyword: '',
+          meta: `${s.date} ${s.time}`,
+          link: `https://finance.sina.com.cn/realstock/company/${s.code}/nc.shtml`,
+          confidence: 'verified',
+          date: new Date().toISOString(),
+          stock: s,
+        });
+      }
+      success('新浪行情API', `${stocks.length} 条行情`);
+    } catch (e) {
+      error('新浪行情API失败', e.message);
+    }
+
+    // 去重
+    const byUrl = deduplicateByUrl(allArticles);
+    const unique = deduplicateByTitle(byUrl);
+    const { bySource, byConfidence } = stats(unique);
+
+    const result = {
+      runAt: new Date().toISOString(),
+      date: new Date().toISOString().slice(0, 10),
+      keywords: keywords,
+      sources: Object.keys(bySource),
+      articles: unique,
+      stats: {
+        total: unique.length,
+        total_raw: allArticles.length,
+        by_source: bySource,
+        by_confidence: byConfidence,
+      },
+    };
+
+    writeJSON('collected.json', result);
+
+    success('采集完成', `${unique.length} 条（原始${allArticles.length}条，去重${allArticles.length - unique.length}条）`);
+    for (const [src, cnt] of Object.entries(bySource)) {
+      console.log(`   ${src}: ${cnt} 条`);
+    }
+    success('可信度', `✅已核实 ${byConfidence.verified} 条 | ⚠️仅标题 ${byConfidence.title_only} 条`);
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+      info('浏览器已关闭');
+    }
   }
-
-  // 先去重URL，再去重标题
-  const byUrl = deduplicateByUrl(allArticles);
-  const unique = deduplicateByTitle(byUrl);
-
-  // 统计
-  const { bySource, byConfidence } = stats(unique);
-
-  const result = {
-    runAt: new Date().toISOString(),
-    date: new Date().toISOString().slice(0, 10),
-    keywords: keywords,
-    sources: Object.keys(bySource),
-    articles: unique,
-    stats: {
-      total: unique.length,
-      total_raw: allArticles.length,
-      by_source: bySource,
-      by_confidence: byConfidence,
-    },
-  };
-
-  writeJSON('collected.json', result);
-
-  console.log(`\n✅ 采集完成: ${unique.length} 条（原始${allArticles.length}条，去重${allArticles.length - unique.length}条）`);
-  for (const [src, cnt] of Object.entries(bySource)) {
-    console.log(`   ${src}: ${cnt} 条`);
-  }
-  console.log(`\n📊 可信度: ✅已核实 ${byConfidence.verified} 条 | ⚠️仅标题 ${byConfidence.title_only} 条`);
 }
 
-collect().catch(e => { console.error(e); process.exit(1); });
+collect().catch(e => { error('采集失败', e.message); process.exit(1); });

@@ -10,6 +10,7 @@
  */
 import https from 'https';
 import iconv from 'iconv-lite';
+import { CONFIG } from '../config.js';
 
 const SINA_API = 'https://hq.sinajs.cn/list={codes}';
 
@@ -62,16 +63,10 @@ function parseSinaLine(code, raw) {
   };
 }
 
-// 默认监控列表
-const DEFAULT_STOCKS = [
-  'sh688256', // 寒武纪 - AI芯片
-  'sh688041', // 海光信息 - 国产CPU/GPU
-  'sh688111', // 金山办公 - 办公软件
-  'sz300750', // 宁德时代 - 锂电池
-  'sh000688', // 科创50指数
-  'sh000001', // 上证指数
-  'sz399006', // 创业板指
-];
+// 获取默认监控列表
+export async function getTechStocks() {
+  return getStockQuotes(CONFIG.stocks.join(','));
+}
 
 // 批量查询
 export async function getStockQuotes(codes) {
@@ -89,11 +84,6 @@ export async function getStockQuotes(codes) {
   return results;
 }
 
-// 获取默认监控列表
-export async function getTechStocks() {
-  return getStockQuotes(DEFAULT_STOCKS.join(','));
-}
-
 // 格式化输出
 export function formatStock(s) {
   const emoji = s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴';
@@ -104,7 +94,7 @@ export function formatStock(s) {
 // 独立运行
 if (process.argv[1]?.includes('sina-stock')) {
   const codes = process.argv.slice(2).join(',');
-  const target = codes || DEFAULT_STOCKS.join(',');
+  const target = codes || CONFIG.stocks.join(',');
   
   getStockQuotes(target).then(results => {
     if (results.length === 0) {
