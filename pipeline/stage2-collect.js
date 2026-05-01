@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * pipeline/stage2-collect.js v6 - 采集阶段
+ * pipeline/stage2-collect.js v7 - 并行采集版
  *
  * 改进：
- * - 用Stage1选题URL直接抓正文（36氪搜索是纯SPA无法渲染）
- * - 点击标题进入正文页，新开标签页抓取正文
- * - 限制抓正文数量防超时
+ * - 多站点并行采集（Promise.all）
+ * - 正文抓取并发控制（最多3个同时）
+ * - 36氪选题URL直接抓正文
  */
 import { chromium } from 'playwright';
 import fsp from 'fs/promises';
@@ -22,7 +22,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * 提取正文内容
  */
 async function extractBody(page) {
-  const content = await page.evaluate((maxChars) => {
+  return page.evaluate((maxChars) => {
     const selectors = [
       '.article-content', '.article-body', '.post-content',
       '.entry-content', '.news_content', '.detail-content',
@@ -43,8 +43,7 @@ async function extractBody(page) {
       if (text && text.length > 200) return text.slice(0, maxChars);
     }
     return null;
-  }, CONFIG.maxContentChars);
-  return content && content.length > 100 ? content : null;
+  }, CONFIG.maxContentChars).catch(() => null);
 }
 
 /**
@@ -79,52 +78,83 @@ async function fetchArticleBody(context, article) {
 }
 
 /**
- * 批量抓取正文（限制数量防超时）
+ * 并发控制工具
  */
-async function fetchBodies(context, items, maxBody = 5) {
+async function concurrencyLimit(tasks, limit) {
+  const results = [];
+  const running = new Set();
+  let index = 0;
+
+  return new Promise((resolve) => {
+    function next() {
+      if (index >= tasks.length && running.size === 0) {
+        resolve(results);
+        return;
+      }
+      while (running.size < limit && index < tasks.length) {
+        const i = index++;
+        const task = tasks[i]();
+        const promise = task.then(r => { results[i] = r; });
+        running.add(promise);
+        promise.finally(() => { running.delete(promise); next(); });
+      }
+    }
+    next();
+  });
+}
+
+/**
+ * 批量抓取正文（并发控制）
+ */
+async function fetchBodies(context, items, maxBody = 5, concurrency = 3) {
   const targets = items.filter(a => a.link && a.link.startsWith('http')).slice(0, maxBody);
-  for (const item of targets) {
-    await fetchArticleBody(context, item);
-  }
+  const tasks = targets.map(item => () => fetchArticleBody(context, item));
+  await concurrencyLimit(tasks, concurrency);
   return items;
 }
 
 /**
- * 通用站点采集
+ * 通用站点采集（单页面）
  */
-async function collectSite(context, page, { url, name, maxItems, domain, wait = 'networkidle', timeout = 15000, delay = 1000 }) {
-  await withRetry(() => page.goto(url, { waitUntil: wait, timeout }), name);
-  await page.waitForTimeout(delay);
+async function collectSite(context, { url, name, maxItems, domain, wait = 'networkidle', timeout = 15000, delay = 1000 }) {
+  const page = await context.newPage();
+  try {
+    await withRetry(() => page.goto(url, { waitUntil: wait, timeout }), name);
+    await page.waitForTimeout(delay);
 
-  const links = await page.evaluate((domain) => {
-    const els = document.querySelectorAll('a');
-    const results = [];
-    const navWords = /^(首页|登录|注册|关于|帮助|政策|条款|更多|全部|分类|频道|导航|菜单|搜索|切换|返回|顶部|底部|侧边)/;
-    const noisePattern = /^(\S{1,6})\s*(刚刚|\d{1,2}:\d{2}|\d{1,2}小时前|\d{4}-\d{2}-\d{2})\s*$/;
-    els.forEach(a => {
-      const raw = a.innerText?.trim();
-      if (!raw || raw.length < 8) return;
-      const href = a.href || '';
-      if (raw.includes('javascript') || (domain && !href.includes(domain))) return;
-      const title = raw.split('\n')[0].trim();
-      if (title.length < 8) return;
-      if (navWords.test(title)) return;
-      if (noisePattern.test(title)) return;
-      results.push({ title, link: href });
-    });
-    return results;
-  }, domain);
+    const links = await page.evaluate((domain) => {
+      const els = document.querySelectorAll('a');
+      const results = [];
+      const navWords = /^(首页|登录|注册|关于|帮助|政策|条款|更多|全部|分类|频道|导航|菜单|搜索|切换|返回|顶部|底部|侧边)/;
+      const noisePattern = /^(\S{1,6})\s*(刚刚|\d{1,2}:\d{2}|\d{1,2}小时前|\d{4}-\d{2}-\d{2})\s*$/;
+      els.forEach(a => {
+        const raw = a.innerText?.trim();
+        if (!raw || raw.length < 8) return;
+        const href = a.href || '';
+        if (raw.includes('javascript') || (domain && !href.includes(domain))) return;
+        const title = raw.split('\n')[0].trim();
+        if (title.length < 8) return;
+        if (navWords.test(title)) return;
+        if (noisePattern.test(title)) return;
+        results.push({ title, link: href });
+      });
+      return results;
+    }, domain);
 
-  const items = links.slice(0, maxItems).map(a => ({
-    title: a.title, source: name, keyword: '', meta: '',
-    link: a.link, confidence: 'title_only', date: new Date().toISOString(),
-  }));
+    const items = links.slice(0, maxItems).map(a => ({
+      title: a.title, source: name, keyword: '', meta: '',
+      link: a.link, confidence: 'title_only', date: new Date().toISOString(),
+    }));
 
-  return await fetchBodies(context, items, 3);
+    await fetchBodies(context, items, 3, 3);
+    return items;
+  } finally {
+    await page.close().catch(() => {});
+  }
 }
 
 /**
- * 主采集流程
+ * 主采集流程 - 并行版
  */
 async function collect() {
   const topicsFile = path.join(DATA_DIR, 'topics.json');
@@ -144,51 +174,56 @@ async function collect() {
   try {
     browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
     const context = await browser.newContext();
-    const page = await context.newPage();
     const allArticles = [];
 
-    // === 36氪选题（直接用Stage1的URL抓正文）===
+    // === 并行采集所有站点 ===
+    const siteTasks = CONFIG.sites.map(site =>
+      collectSite(context, site).catch(e => {
+        warn(`${site.name} 采集失败`, e.message);
+        return [];
+      })
+    );
+
+    // 36氪选题（并行）
     const topics = topicsData.topics || [];
-    const krItems = topics.slice(0, 15).map(t => ({
-      title: t.title, source: '36氪', keyword: '', meta: '',
-      link: (t.url && t.url.startsWith('http')) ? t.url : '',
-      confidence: 'title_only', date: new Date().toISOString(),
-    }));
-    await fetchBodies(context, krItems, 5);
+    const krTask = (async () => {
+      const krItems = topics.slice(0, 15).map(t => ({
+        title: t.title, source: '36氪', keyword: '', meta: '',
+        link: (t.url && t.url.startsWith('http')) ? t.url : '',
+        confidence: 'title_only', date: new Date().toISOString(),
+      }));
+      await fetchBodies(context, krItems, 5, 3);
+      return krItems;
+    })().catch(e => { warn('36氪选题失败', e.message); return []; });
+
+    // 新浪行情API（并行）
+    const stockTask = getTechStocks().then(stocks =>
+      stocks.map(s => ({
+        title: `${s.name}(${s.code}) ¥${s.current} ${s.change > 0 ? '+' : ''}${s.changePct}% 成交¥${s.turnoverYi}亿 ${s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴'}`,
+        source: '新浪财经API', keyword: '', meta: `${s.date} ${s.time}`,
+        link: `https://finance.sina.com.cn/realstock/company/${s.code}/nc.shtml`,
+        confidence: 'verified', date: new Date().toISOString(), stock: s,
+      }))
+    ).catch(e => { error('新浪行情API失败', e.message); return []; });
+
+    // 等待所有并行任务完成
+    const [krItems, ...siteResults] = await Promise.all([krTask, ...siteTasks]);
+    const stocks = await stockTask;
+
+    // 合并结果
     allArticles.push(...krItems);
+    for (const items of siteResults) allArticles.push(...items);
+    allArticles.push(...stocks);
+
+    // 打印各站点结果
     const withBody = krItems.filter(i => i.content).length;
     success('36氪选题', `${krItems.length} 条（正文${withBody}篇）`);
-
-    // === 通用站点采集 ===
-    for (const site of CONFIG.sites) {
-      info(`采集 ${site.name}`);
-      try {
-        const items = await collectSite(context, page, site);
-        allArticles.push(...items);
-        const withBody = items.filter(i => i.content).length;
-        success(`${site.name}`, `${items.length} 条（正文${withBody}篇）`);
-      } catch (e) {
-        warn(`${site.name} 采集失败`, e.message);
-      }
+    for (let i = 0; i < CONFIG.sites.length; i++) {
+      const items = siteResults[i];
+      const withBody = items.filter(it => it.content).length;
+      success(`${CONFIG.sites[i].name}`, `${items.length} 条（正文${withBody}篇）`);
     }
-
-    // === 新浪行情API ===
-    info('新浪行情API');
-    try {
-      const stocks = await getTechStocks();
-      for (const s of stocks) {
-        const emoji = s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴';
-        allArticles.push({
-          title: `${s.name}(${s.code}) ¥${s.current} ${s.change > 0 ? '+' : ''}${s.changePct}% 成交¥${s.turnoverYi}亿 ${emoji}`,
-          source: '新浪财经API', keyword: '', meta: `${s.date} ${s.time}`,
-          link: `https://finance.sina.com.cn/realstock/company/${s.code}/nc.shtml`,
-          confidence: 'verified', date: new Date().toISOString(), stock: s,
-        });
-      }
-      success('新浪行情API', `${stocks.length} 条行情`);
-    } catch (e) {
-      error('新浪行情API失败', e.message);
-    }
+    success('新浪行情API', `${stocks.length} 条行情`);
 
     // 去重
     const byUrl = deduplicateByUrl(allArticles);
@@ -203,7 +238,6 @@ async function collect() {
     };
 
     await writeJSON('collected.json', result);
-
     success('采集完成', `${unique.length} 条（原始${allArticles.length}条，去重${allArticles.length - unique.length}条）`);
     for (const [src, cnt] of Object.entries(bySource)) console.log(`   ${src}: ${cnt} 条`);
     success('可信度', `✅已核实 ${byConfidence.verified} 条 | ⚠️仅标题 ${byConfidence.title_only} 条`);
