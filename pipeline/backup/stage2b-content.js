@@ -15,7 +15,6 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { hasUrl, markUrl } from './lib/common.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, 'data');
@@ -23,7 +22,7 @@ const COLLECTED_FILE = path.join(DATA_DIR, 'collected.json');
 
 // 解析参数
 const args = process.argv.slice(2);
-const maxArticles = args.includes('--all') ? Infinity : parseInt(args.find(a => a.startsWith('--max'))?.split('=')[1] || '10');
+const maxArticles = parseInt(args.find(a => a.startsWith('--max'))?.split('=')[1] || '5');
 const sourceFilter = args.find(a => a.startsWith('--source'))?.split('=')[1];
 
 async function fetchContent() {
@@ -68,13 +67,6 @@ async function fetchContent() {
     const a = targets[i];
     console.log(`[${i + 1}/${targets.length}] ${a.source}: ${a.title.slice(0, 40)}...`);
 
-    // 检查URL缓存
-    if (hasUrl(a.link)) {
-      console.log(`   ⏭️ 已抓取过，跳过`);
-      successCount++;
-      continue;
-    }
-
     try {
       await page.goto(a.link, { waitUntil: 'domcontentloaded', timeout: 15000 });
       await page.waitForTimeout(3000); // 等待JS渲染
@@ -104,7 +96,7 @@ async function fetchContent() {
           if (el) {
             const text = el.innerText?.trim();
             if (text && text.length > 100) {
-              return text.slice(0, 8000); // 统一截断8000字
+              return text;
             }
           }
         }
@@ -125,7 +117,6 @@ async function fetchContent() {
         a.content = content.slice(0, 8000); // 限制8000字
         a.contentFetchedAt = new Date().toISOString();
         a.contentSource = a.link;
-        markUrl(a.link, { title: a.title.slice(0, 50), chars: content.length });
         successCount++;
         console.log(`   ✅ ${content.length} 字`);
       } else {

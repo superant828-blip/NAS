@@ -15,7 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getTechStocks } from './lib/sina-stock.js';
-import { withRetry, deduplicateByTitle, stats, writeJSON, DATA_DIR } from './lib/common.js';
+import { withRetry, deduplicateByTitle, deduplicateByUrl, stats, writeJSON, DATA_DIR } from './lib/common.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,12 +37,22 @@ async function collectSite(page, { url, name, maxItems, domain, wait = 'networki
   const articles = await page.evaluate((domain) => {
     const links = document.querySelectorAll('a');
     const results = [];
+    // 杂质模式：纯作者名+时间戳、导航词
+    const navWords = /^(首页|登录|注册|关于|帮助|政策|条款|更多|全部|分类|频道|导航|菜单|搜索|切换|返回|顶部|底部|侧边)/;
+    const noisePattern = /^(\S{1,6})\s*(刚刚|\d{1,2}:\d{2}|\d{1,2}小时前|\d{4}-\d{2}-\d{2})\s*$/;
     links.forEach(a => {
-      const t = a.innerText?.trim();
+      const raw = a.innerText?.trim();
+      if (!raw || raw.length < 8) return;
       const href = a.href || '';
-      if (t && t.length > 8 && !t.includes('javascript') && (!domain || href.includes(domain))) {
-        results.push({ title: t, link: href });
-      }
+      if (raw.includes('javascript') || (domain && !href.includes(domain))) return;
+      // 取第一段（去掉换行后的作者/时间后缀）
+      const title = raw.split('\n')[0].trim();
+      if (title.length < 8) return;
+      // 过滤导航/菜单
+      if (navWords.test(title)) return;
+      // 过滤纯作者+时间戳的垃圾行
+      if (noisePattern.test(title)) return;
+      results.push({ title, link: href });
     });
     return results;
   }, domain);
@@ -177,8 +187,9 @@ async function collect() {
     console.log(`    ⚠️ ${e.message}`);
   }
 
-  // 去重
-  const unique = deduplicateByTitle(allArticles);
+  // 先去重URL，再去重标题
+  const byUrl = deduplicateByUrl(allArticles);
+  const unique = deduplicateByTitle(byUrl);
 
   // 统计
   const { bySource, byConfidence } = stats(unique);

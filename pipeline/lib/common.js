@@ -22,6 +22,42 @@ export function writeJSON(file, data) {
 }
 
 /**
+ * URL 缓存：记录已抓取的 URL，避免重复抓取
+ */
+const CACHE_FILE = 'url-cache.json';
+let cache = null;
+
+export function loadUrlCache() {
+  if (cache) return cache;
+  const p = path.join(DATA_DIR, CACHE_FILE);
+  if (fs.existsSync(p)) {
+    cache = JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } else {
+    cache = { urls: {}, version: 1 };
+  }
+  return cache;
+}
+
+export function hasUrl(url) {
+  const c = loadUrlCache();
+  const key = url.split('?')[0];
+  return !!c.urls[key];
+}
+
+export function markUrl(url, meta = {}) {
+  const c = loadUrlCache();
+  const key = url.split('?')[0];
+  c.urls[key] = { fetchedAt: new Date().toISOString(), ...meta };
+  fs.writeFileSync(path.join(DATA_DIR, CACHE_FILE), JSON.stringify(c, null, 2));
+}
+
+export function clearUrlCache() {
+  cache = { urls: {}, version: 1 };
+  fs.writeFileSync(path.join(DATA_DIR, CACHE_FILE), JSON.stringify(cache, null, 2));
+  console.log('✅ URL缓存已清除');
+}
+
+/**
  * 通用重试包装
  */
 export async function withRetry(fn, label, maxRetries = 2, delayMs = 2000) {
@@ -50,6 +86,24 @@ export function deduplicateByTitle(items) {
     }
   }
   return unique;
+}
+
+/**
+ * 按URL去重（优先保留有meta/keyword的条目）
+ */
+export function deduplicateByUrl(items) {
+  const seen = new Map(); // url -> best item
+  for (const a of items) {
+    const url = (a.link || '').split('?')[0]; // 忽略query参数
+    const existing = seen.get(url);
+    if (!existing) {
+      seen.set(url, a);
+    } else if (a.meta || a.keyword) {
+      // 优先保留有元数据的
+      seen.set(url, a);
+    }
+  }
+  return Array.from(seen.values());
 }
 
 /**

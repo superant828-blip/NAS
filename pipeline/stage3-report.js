@@ -102,6 +102,21 @@ function generateReport(collected) {
     lines.push('');
   }
 
+  // 有正文的文章摘要
+  const withContent = articles.filter(a => a.content);
+  if (withContent.length > 0) {
+    lines.push('## 📝 正文摘要');
+    lines.push('');
+    for (let i = 0; i < Math.min(withContent.length, 10); i++) {
+      const a = withContent[i];
+      const summary = a.content.slice(0, 200).replace(/\n+/g, ' ').trim();
+      lines.push(`### ${i + 1}. ${a.title}`);
+      lines.push(`> ${summary}...`);
+      lines.push(`*来源: ${a.source}*`);
+      lines.push('');
+    }
+  }
+
   // 可信度声明
   lines.push('---');
   lines.push('## ⚠️ 数据可信度说明');
