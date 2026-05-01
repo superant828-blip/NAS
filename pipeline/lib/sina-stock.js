@@ -37,6 +37,12 @@ function parseSinaLine(code, raw) {
   const change = current - yesterdayClose;
   const changePct = yesterdayClose > 0 ? (change / yesterdayClose * 100) : 0;
 
+  // 根据代码前缀判断涨停阈值：科创板/创业板20%，主板10%，ST股5%
+  const isKCB = code.startsWith('sh688');
+  const isGEM = code.startsWith('sz300');
+  const isSTAR = code.startsWith('sh688') || code.startsWith('sz301');
+  const limitPct = isSTAR ? 19.95 : 9.95;
+
   return {
     code,
     name: fields[0],
@@ -51,7 +57,7 @@ function parseSinaLine(code, raw) {
     turnoverYi: +(parseFloat(fields[9]) / 1e8).toFixed(2),
     date: fields[30],
     time: fields[31],
-    isLimitUp: changePct >= 19.95, // 科创板20%涨停
+    isLimitUp: Math.abs(changePct) >= limitPct,
     source: '新浪财经API',
   };
 }

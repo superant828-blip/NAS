@@ -96,7 +96,7 @@ async function fetchContent() {
           if (el) {
             const text = el.innerText?.trim();
             if (text && text.length > 100) {
-              return text;
+              return text.slice(0, 8000); // 统一截断8000字
             }
           }
         }
@@ -106,7 +106,7 @@ async function fetchContent() {
         if (main) {
           const text = main.innerText?.trim();
           if (text && text.length > 200) {
-            return text.slice(0, 5000); // 限制长度
+            return text.slice(0, 8000); // 限制长度
           }
         }
 
@@ -114,7 +114,7 @@ async function fetchContent() {
       });
 
       if (content && content.length > 100) {
-        a.content = content.slice(0, 5000); // 限制5000字
+        a.content = content.slice(0, 8000); // 限制8000字
         a.contentFetchedAt = new Date().toISOString();
         a.contentSource = a.link;
         successCount++;
