@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 /**
- * pipeline/stage1-topics.js - 选题阶段：抓取36kr数据 → 生成选题清单
+ * pipeline/stage1-topics.js v2 - 选题阶段：实体识别 + 热度排序
+ * 
+ * 改进：
+ * - 维护命名实体词典（公司/产品/人名/技术）
+ * - 从标题中提取实体作为关键词
+ * - 按热度排序（出现频率 × 来源权重）
+ * - 过滤噪音词（品牌栏目/时间标签/运营词）
  */
 import https from 'https';
 import fs from 'fs';
@@ -29,28 +35,173 @@ function httpGet(url) {
   });
 }
 
-function extractKeywords(titles, topN = 10) {
-  const stopWords = new Set(['的','了','是','在','和','与','或','等','个','这','那','就','都','被','把','对','于','中','上','下','来','到','过','为','以','及','之','而','但','却','还','也','又','再','最','很','更','已','将','让','使','比','按','根据','关于','对于','随着','由于','因为','所以','如果','那么','第一','第二']);
-  // 噪音关键词模式：品牌栏目/时间标签/无意义短语
-  const noisePatterns = [
-    /^(8点1氪|15点1氪|24点1氪|1氪|晚报|早报|午报)/,  // 品牌栏目
-    /^(寻求报道|我要报道|投稿|合作)/,  // 运营标签
-    /^(今天|今年|今年五一|这个五一|本周|本月|本月精选)/,  // 时间标签
-    /^(官方通报|突发|快讯|独家|首发|重磅)/,  // 新闻标签
-  ];
-  const wc = {};
-  for (const t of titles) {
-    for (const w of t.split(/[，。、；：！？""''（）【】\s\-_.:\/\\]+/)) {
-      if (w.length >= 2 && !stopWords.has(w) && !/^\d+$/.test(w)) {
-        // 过滤噪音关键词
-        const isNoise = noisePatterns.some(p => p.test(w));
-        if (!isNoise) wc[w] = (wc[w]||0)+1;
-      }
-    }
-  }
-  return Object.entries(wc).sort((a,b)=>b[1]-a[1]).slice(0,topN).map(([w])=>w);
+// === 命名实体词典 ===
+const ENTITIES = {
+  // 公司/品牌
+  companies: [
+    'OpenAI', 'Google', '谷歌', 'Meta', 'Facebook', 'Apple', '苹果', '微软', 'Microsoft',
+    '亚马逊', 'Amazon', '特斯拉', 'Tesla', '英伟达', 'NVIDIA', '腾讯', '阿里',
+    '阿里巴巴', '百度', '字节跳动', '抖音', '小红书', '美团', '京东', '拼多多',
+    '网易', '快手', '小米', '华为', 'OPPO', 'vivo', '三星', '英特尔', 'AMD',
+    '高通', '台积电', '中芯国际', '寒武纪', '海光信息', '金山办公', 'WPS',
+    '宁德时代', '比亚迪', '理想汽车', '蔚来', '小鹏汽车', '吉利', '长城汽车',
+    '大众', '丰田', '本田', '空客', '波音', '西门子', 'IBM', '甲骨文',
+    'SAP', 'Salesforce', 'Adobe', 'Shopify', 'Stripe', 'Snowflake', 'Databricks',
+    'Anthropic', 'Cohere', 'Mistral', 'Stability AI',
+    '36氪', '华尔街见闻', '财新', '经济观察报', '21世纪经济报道',
+  ],
+  // 产品/服务
+  products: [
+    'ChatGPT', 'GPT-4', 'GPT-5', 'Claude', 'Copilot', 'Gemini', 'Bard',
+    'DeepSeek', '文心一言', '通义千问', 'Kimi', '智谱清言', '豆包',
+    '即梦', 'Sora', 'Midjourney', 'Stable Diffusion', 'Manus',
+    'iPhone', 'iPad', 'Mac', 'Apple Vision Pro', 'AirPods',
+    '微信', '支付宝', '钉钉', '飞书', '企业微信', 'Telegram', 'WhatsApp',
+    '抖音', 'TikTok', '快手', 'B站', '哔哩哔哩', '微博', '知乎',
+    '淘宝', '天猫', '京东', '拼多多', '闲鱼', '得物',
+    'iOS', 'Android', 'HarmonyOS', '鸿蒙', 'Windows', 'Linux',
+    'Copilot', 'GitHub', 'VS Code',
+  ],
+  // 人名
+  people: [
+    '马斯克', '黄仁勋', '库克', '皮查伊', '扎克伯格', '贝佐斯', '纳德拉',
+    '苏姿丰', '李彦宏', '马化腾', '马云', '张一鸣', '王兴', '刘强东',
+    '沈南鹏', '张磊', '王慧文', '阮晓寰', '闫宏', '吴恩达', '李飞飞',
+    '姚期智', '顾嘉炜', '杨植麟', '朱军', '陈天石', '陈巍',
+    '特朗普', '拜登', '普京',
+  ],
+  // 技术/概念
+  tech: [
+    'AI', '人工智能', '大模型', 'LLM', 'AGI', '机器学习', '深度学习',
+    '神经网络', 'Transformer', '多模态', 'AIGC', '生成式AI',
+    '自动驾驶', '智能驾驶', '辅助驾驶', '机器人', '人形机器人',
+    '芯片', '半导体', 'GPU', 'CPU', 'NPU', '算力',
+    '云计算', '云原生', '边缘计算', '量子计算', '区块链', 'Web3',
+    '元宇宙', 'VR', 'AR', 'MR', 'XR',
+    'SaaS', 'PaaS', 'IaaS', 'MaaS',
+    'Agent', '智能体', 'RAG', '微调', '预训练', '推理', '训练',
+    '5G', '6G', '物联网', 'IoT', '工业互联网',
+    '低代码', '无代码', 'DevOps', 'MLOps',
+    '数据安全', '隐私计算', '联邦学习', '零信任',
+    '合成生物', '细胞治疗', '基因编辑', 'mRNA',
+    '固态电池', '钠离子电池', '氢能', '燃料电池',
+  ],
+};
+
+// 停用词
+const STOP_WORDS = new Set([
+  '的','了','是','在','和','与','或','等','个','这','那','就','都','被','把',
+  '对','于','中','上','下','来','到','过','为','以','及','之','而','但','却',
+  '还','也','又','再','最','很','更','已','将','让','使','比','按','根据',
+  '关于','对于','随着','由于','因为','所以','如果','那么','第一','第二',
+  '如何','为什么','怎么样','什么','哪些','哪个','谁','几','多','少',
+]);
+
+// 噪音模式
+const NOISE_PATTERNS = [
+  /^(8点1氪|15点1氪|24点1氪|1氪|晚报|早报|午报)/,
+  /^(寻求报道|我要报道|投稿|合作|融资)/,
+  /^(今天|今年|今年五一|这个五一|本周|本月|本月精选|近日|最近|最新)/,
+  /^(官方通报|突发|快讯|独家|首发|重磅|曝光|揭秘|深度|观察)/,
+  /^(刚刚|最新消息|实时|即时)/,
+];
+
+/**
+ * 分词
+ */
+function tokenize(text) {
+  return text.split(/[，。、；：！？""''（）【】\s\-_.:\/\\]+/);
 }
 
+/**
+ * 识别命名实体
+ */
+function extractEntities(text) {
+  const found = [];
+  const allEntities = [
+    ...ENTITIES.companies,
+    ...ENTITIES.products,
+    ...ENTITIES.people,
+    ...ENTITIES.tech,
+  ];
+  
+  for (const entity of allEntities) {
+    if (text.includes(entity) && !found.includes(entity)) {
+      found.push(entity);
+    }
+  }
+  return found;
+}
+
+/**
+ * 提取关键词（从标题中，实体优先）
+ */
+function extractKeywords(title, topN = 5) {
+  const tokens = tokenize(title);
+  const weights = {};
+  
+  for (const token of tokens) {
+    if (token.length < 2) continue;
+    if (STOP_WORDS.has(token)) continue;
+    if (/^\d+$/.test(token)) continue;
+    
+    // 检查噪音
+    const isNoise = NOISE_PATTERNS.some(p => p.test(token));
+    if (isNoise) continue;
+    
+    // 实体词权重高
+    const isEntity = [
+      ...ENTITIES.companies,
+      ...ENTITIES.products,
+      ...ENTITIES.people,
+      ...ENTITIES.tech,
+    ].some(e => e.includes(token) || token.includes(e));
+    
+    weights[token] = (weights[token] || 0) + (isEntity ? 3 : 1);
+  }
+  
+  return Object.entries(weights)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([w]) => w);
+}
+
+/**
+ * 从所有标题中提取高频实体作为关键词
+ */
+function extractTopEntities(topics, topN = 10) {
+  const entityCounts = {};
+  const entitySources = {};
+  
+  for (const topic of topics) {
+    const entities = extractEntities(topic.title);
+    const seen = new Set();
+    
+    for (const e of entities) {
+      if (seen.has(e)) continue;
+      seen.add(e);
+      entityCounts[e] = (entityCounts[e] || 0) + 1;
+      if (!entitySources[e]) entitySources[e] = new Set();
+      entitySources[e].add(topic.source);
+    }
+  }
+  
+  // 热度 = 出现次数 × 2 + 来源数
+  return Object.entries(entityCounts)
+    .map(([entity, count]) => ({
+      entity,
+      count,
+      sources: entitySources[entity].size,
+     热度: count * 2 + entitySources[entity].size,
+    }))
+    .sort((a, b) => b.热度 - a.热度)
+    .slice(0, topN)
+    .map(e => e.entity);
+}
+
+/**
+ * 主流程
+ */
 async function main() {
   const date = todayStr();
   console.log(`📡 获取36kr数据 (${date})...`);
@@ -69,17 +220,31 @@ async function main() {
       const title = item.title || '';
       if (title && !seen.has(title)) {
         seen.add(title);
-        topics.push({ title, source: item.author || item.authorName || src, url: item.url || item.noteUrl || '' });
+        topics.push({ 
+          title, 
+          source: item.author || item.authorName || src, 
+          url: item.url || item.noteUrl || '',
+        });
       }
     }
   }
 
-  const keywords = extractKeywords(topics.map(t=>t.title), 10);
-  const result = { runAt: new Date().toISOString(), date, topics, keywords };
+  console.log(`📊 获取 ${topics.length} 条选题`);
+
+  // 提取实体关键词
+  const keywords = extractTopEntities(topics, 10);
+
+  const result = {
+    runAt: new Date().toISOString(),
+    date,
+    topics,
+    keywords,
+  };
+
   fs.writeFileSync(path.join(DATA_DIR, 'topics.json'), JSON.stringify(result, null, 2));
 
-  console.log(`✅ 选题完成: ${topics.length} 条, ${keywords.length} 个关键词`);
-  console.log(`关键词: ${keywords.join(', ')}`);
+  console.log(`\n✅ 选题完成: ${topics.length} 条, ${keywords.length} 个关键词`);
+  console.log(`\n关键词: ${keywords.join(', ')}`);
 }
 
 main().catch(console.error);
