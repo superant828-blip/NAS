@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-05-01T07:56:20.933Z",
+  "runAt": "2026-05-01T08:55:43.556Z",
   "date": "2026-05-01",
   "topics": [
     {
@@ -53,29 +53,29 @@
       "url": "https://36kr.com/p/3789105070873856?channel=skills"
     },
     {
-      "title": "从哲学概念到科技概念，再到经济概念，Token的前世今生",
-      "source": "砺石商业评论",
-      "url": "https://36kr.com/p/3788900363770883?channel=skills"
-    },
-    {
-      "title": "“我可能不再建议学计算机”，图灵奖得主炮轰半个行业，并断言：AI Agent最后全是数据库问题",
-      "source": "极客邦科技InfoQ",
-      "url": "https://36kr.com/p/3788895533095937?channel=skills"
-    },
-    {
-      "title": "龙虾热潮退去，Mac mini养虾户现状：有人退坑，有人换了「爱马仕」",
-      "source": "雷科技",
-      "url": "https://36kr.com/p/3789244139450880?channel=skills"
-    },
-    {
       "title": "五一档，等爆款",
       "source": "定焦One",
       "url": "https://36kr.com/p/3790013584759816?channel=skills"
     },
     {
-      "title": "豆包，盯上淘宝京东大本营",
-      "source": "智东西",
-      "url": "https://36kr.com/p/3787900447677449?channel=skills"
+      "title": "从哲学概念到科技概念，再到经济概念，Token的前世今生",
+      "source": "砺石商业评论",
+      "url": "https://36kr.com/p/3788900363770883?channel=skills"
+    },
+    {
+      "title": "老外闯中国：洋相、大考与“民间外交部”",
+      "source": "凤凰周刊",
+      "url": "https://36kr.com/p/3790042406067201?channel=skills"
+    },
+    {
+      "title": "China Travel 2.0：不只是旅游，更是万亿服贸出海",
+      "source": "表外表里",
+      "url": "https://36kr.com/p/3789272134540290?channel=skills"
+    },
+    {
+      "title": "“我可能不再建议学计算机”，图灵奖得主炮轰半个行业，并断言：AI Agent最后全是数据库问题",
+      "source": "极客邦科技InfoQ",
+      "url": "https://36kr.com/p/3788895533095937?channel=skills"
     },
     {
       "title": "蜀光惠以数智之力，打造“川字号”数字消费平台标杆",
@@ -257,11 +257,11 @@
     "AI",
     "OpenAI",
     "DeepSeek",
-    "豆包",
     "马斯克",
     "Agent",
     "机器人",
     "即梦",
+    "豆包",
     "三星",
     "GPT-5"
   ]

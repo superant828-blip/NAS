@@ -1,20 +1,22 @@
 #!/usr/bin/env node
 /**
- * pipeline/stage2-collect.js v4 - 采集阶段（优化版）
+ * pipeline/stage2-collect.js v5 - 采集阶段（优化版）
+ *
+ * 基于选题关键词，从 36氪搜索、通用站点、新浪行情API 采集资讯，
+ * 去重后保存到 collected.json。
  *
  * 改进：
- * - 提取通用采集函数，消除重复代码
- * - 添加重试机制
- * - 动态等待代替固定延时
- * - 新浪API：实时获取7只科技股/指数行情
- * - 去重：按标题前40字去重
- * - 置信度标注：每条数据标注可信度
- * - P0: try-finally 确保浏览器关闭
- * - P1: 配置外部化
- * - P2: 结构化日志
+ * - 文件操作异步化（fs → fsp）
+ * - LOG_LEVEL 环境变量控制日志输出
+ * - 完整 JSDoc 注释
+ * - 增强异常处理
+ * - try-finally 确保浏览器关闭（防泄漏）
+ *
+ * @module stage2-collect
  */
+
 import { chromium } from 'playwright';
-import fs from 'fs';
+import fsp from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { getTechStocks } from './lib/sina-stock.js';
@@ -25,8 +27,18 @@ import { CONFIG } from './config.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * 通用站点采集函数
- * 提取页面所有 <a> 链接，过滤有效标题
+ * 通用站点采集函数：提取页面所有 <a> 链接，过滤有效标题。
+ *
+ * @param {import('playwright').Page} page - Playwright 页面实例
+ * @param {object} options - 采集配置
+ * @param {string} options.url - 目标 URL
+ * @param {string} options.name - 站点名称
+ * @param {number} options.maxItems - 最大采集数量
+ * @param {string} [options.domain] - 域名过滤（可选）
+ * @param {string} [options.wait='networkidle'] - 等待策略
+ * @param {number} [options.timeout=15000] - 超时（毫秒）
+ * @param {number} [options.delay=1000] - 加载后等待（毫秒）
+ * @returns {Promise<Array<{title: string, source: string, keyword: string, meta: string, link: string, confidence: string, date: string}>>}
  */
 async function collectSite(page, { url, name, maxItems, domain, wait = 'networkidle', timeout = 15000, delay = 1000 }) {
   await withRetry(
@@ -70,8 +82,11 @@ async function collectSite(page, { url, name, maxItems, domain, wait = 'networki
 }
 
 /**
- * 36氪搜索采集
- * 使用专用选择器提取搜索结果卡片
+ * 36氪搜索采集：使用专用选择器提取搜索结果卡片。
+ *
+ * @param {import('playwright').Page} page - Playwright 页面实例
+ * @param {string} keyword - 搜索关键词
+ * @returns {Promise<Array<{title: string, source: string, keyword: string, meta: string, link: string, confidence: string, date: string}>>}
  */
 async function collect36kr(page, keyword) {
   const url = `https://www.36kr.com/search/articles/${encodeURIComponent(keyword)}`;
@@ -118,13 +133,23 @@ async function collect36kr(page, keyword) {
   }
 }
 
+/**
+ * 主采集流程：读取选题 → 36氪搜索 → 通用站点 → 新浪行情 → 去重 → 保存。
+ * @returns {Promise<void>}
+ */
 async function collect() {
   const topicsFile = path.join(DATA_DIR, 'topics.json');
-  if (!fs.existsSync(topicsFile)) {
-    error('没有选题数据，请先运行 Stage 1');
+
+  // 异步检查并读取选题数据
+  let topics;
+  try {
+    const raw = await fsp.readFile(topicsFile, 'utf-8');
+    topics = JSON.parse(raw);
+  } catch (err) {
+    error('没有选题数据或读取失败', `请先运行 Stage 1: ${err.message}`);
     process.exit(1);
   }
-  const topics = JSON.parse(fs.readFileSync(topicsFile, 'utf-8'));
+
   const keywords = topics.keywords || [];
   info('开始采集', `${keywords.length} 个关键词`);
 
@@ -193,7 +218,7 @@ async function collect() {
       },
     };
 
-    writeJSON('collected.json', result);
+    await writeJSON('collected.json', result);
 
     success('采集完成', `${unique.length} 条（原始${allArticles.length}条，去重${allArticles.length - unique.length}条）`);
     for (const [src, cnt] of Object.entries(bySource)) {
@@ -208,4 +233,7 @@ async function collect() {
   }
 }
 
-collect().catch(e => { error('采集失败', e.message); process.exit(1); });
+collect().catch(e => {
+  error('采集失败', e.message);
+  process.exit(1);
+});
