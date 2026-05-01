@@ -1,20 +1,12 @@
 #!/usr/bin/env node
 /**
- * pipeline/stage2-collect.js v5 - 采集阶段（优化版）
- *
- * 基于选题关键词，从 36氪搜索、通用站点、新浪行情API 采集资讯，
- * 去重后保存到 collected.json。
+ * pipeline/stage2-collect.js v6 - 采集阶段
  *
  * 改进：
- * - 文件操作异步化（fs → fsp）
- * - LOG_LEVEL 环境变量控制日志输出
- * - 完整 JSDoc 注释
- * - 增强异常处理
- * - try-finally 确保浏览器关闭（防泄漏）
- *
- * @module stage2-collect
+ * - 用Stage1选题URL直接抓正文（36氪搜索是纯SPA无法渲染）
+ * - 点击标题进入正文页，新开标签页抓取正文
+ * - 限制抓正文数量防超时
  */
-
 import { chromium } from 'playwright';
 import fsp from 'fs/promises';
 import path from 'path';
@@ -27,32 +19,89 @@ import { CONFIG } from './config.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * 通用站点采集函数：提取页面所有 <a> 链接，过滤有效标题。
- *
- * @param {import('playwright').Page} page - Playwright 页面实例
- * @param {object} options - 采集配置
- * @param {string} options.url - 目标 URL
- * @param {string} options.name - 站点名称
- * @param {number} options.maxItems - 最大采集数量
- * @param {string} [options.domain] - 域名过滤（可选）
- * @param {string} [options.wait='networkidle'] - 等待策略
- * @param {number} [options.timeout=15000] - 超时（毫秒）
- * @param {number} [options.delay=1000] - 加载后等待（毫秒）
- * @returns {Promise<Array<{title: string, source: string, keyword: string, meta: string, link: string, confidence: string, date: string}>>}
+ * 提取正文内容
  */
-async function collectSite(page, { url, name, maxItems, domain, wait = 'networkidle', timeout = 15000, delay = 1000 }) {
-  await withRetry(
-    () => page.goto(url, { waitUntil: wait, timeout }),
-    name,
-  );
+async function extractBody(page) {
+  const content = await page.evaluate((maxChars) => {
+    const selectors = [
+      '.article-content', '.article-body', '.post-content',
+      '.entry-content', '.news_content', '.detail-content',
+      '.article-detail', '[class*="article-content"]', '[class*="article-body"]',
+      '[class*="post-content"]', '[class*="detail-content"]',
+      'article', '.rich_media_content', '#artibody',
+    ];
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const text = el.innerText?.trim();
+        if (text && text.length > 100) return text.slice(0, maxChars);
+      }
+    }
+    const main = document.querySelector('main');
+    if (main) {
+      const text = main.innerText?.trim();
+      if (text && text.length > 200) return text.slice(0, maxChars);
+    }
+    return null;
+  }, CONFIG.maxContentChars);
+  return content && content.length > 100 ? content : null;
+}
+
+/**
+ * 点击标题进入正文页，提取内容（新开标签页）
+ */
+async function fetchArticleBody(context, article) {
+  if (!article.link || !article.link.startsWith('http')) {
+    article.confidence = 'title_only';
+    return article;
+  }
+  let newPage;
+  try {
+    newPage = await context.newPage();
+    await newPage.goto(article.link, { waitUntil: 'domcontentloaded', timeout: CONFIG.pageTimeout });
+    await newPage.waitForTimeout(2000);
+    const content = await extractBody(newPage);
+    if (content) {
+      article.content = content;
+      article.contentFetchedAt = new Date().toISOString();
+      article.contentSource = article.link;
+      article.confidence = 'verified';
+    } else {
+      article.confidence = 'title_only';
+    }
+  } catch (e) {
+    article.confidence = 'title_only';
+    article.contentError = e.message.slice(0, 200);
+  } finally {
+    if (newPage) await newPage.close().catch(() => {});
+  }
+  return article;
+}
+
+/**
+ * 批量抓取正文（限制数量防超时）
+ */
+async function fetchBodies(context, items, maxBody = 5) {
+  const targets = items.filter(a => a.link && a.link.startsWith('http')).slice(0, maxBody);
+  for (const item of targets) {
+    await fetchArticleBody(context, item);
+  }
+  return items;
+}
+
+/**
+ * 通用站点采集
+ */
+async function collectSite(context, page, { url, name, maxItems, domain, wait = 'networkidle', timeout = 15000, delay = 1000 }) {
+  await withRetry(() => page.goto(url, { waitUntil: wait, timeout }), name);
   await page.waitForTimeout(delay);
 
-  const articles = await page.evaluate((domain) => {
-    const links = document.querySelectorAll('a');
+  const links = await page.evaluate((domain) => {
+    const els = document.querySelectorAll('a');
     const results = [];
     const navWords = /^(首页|登录|注册|关于|帮助|政策|条款|更多|全部|分类|频道|导航|菜单|搜索|切换|返回|顶部|底部|侧边)/;
     const noisePattern = /^(\S{1,6})\s*(刚刚|\d{1,2}:\d{2}|\d{1,2}小时前|\d{4}-\d{2}-\d{2})\s*$/;
-    links.forEach(a => {
+    els.forEach(a => {
       const raw = a.innerText?.trim();
       if (!raw || raw.length < 8) return;
       const href = a.href || '';
@@ -66,112 +115,58 @@ async function collectSite(page, { url, name, maxItems, domain, wait = 'networki
     return results;
   }, domain);
 
-  const items = [];
-  for (const a of articles.slice(0, maxItems)) {
-    items.push({
-      title: a.title,
-      source: name,
-      keyword: '',
-      meta: '',
-      link: a.link,
-      confidence: 'title_only',
-      date: new Date().toISOString(),
-    });
-  }
-  return items;
+  const items = links.slice(0, maxItems).map(a => ({
+    title: a.title, source: name, keyword: '', meta: '',
+    link: a.link, confidence: 'title_only', date: new Date().toISOString(),
+  }));
+
+  return await fetchBodies(context, items, 3);
 }
 
 /**
- * 36氪搜索采集：使用专用选择器提取搜索结果卡片。
- *
- * @param {import('playwright').Page} page - Playwright 页面实例
- * @param {string} keyword - 搜索关键词
- * @returns {Promise<Array<{title: string, source: string, keyword: string, meta: string, link: string, confidence: string, date: string}>>}
- */
-async function collect36kr(page, keyword) {
-  const url = `https://www.36kr.com/search/articles/${encodeURIComponent(keyword)}`;
-  info(`36氪搜索: "${keyword}"`);
-
-  try {
-    await withRetry(
-      () => page.goto(url, { waitUntil: 'networkidle', timeout: 20000 }),
-      `36氪-${keyword}`,
-    );
-    await page.waitForTimeout(1000);
-
-    const articles = await page.evaluate(() => {
-      const cards = document.querySelectorAll('.article-card, .flow-item, [class*="article"], [class*="flow-item"]');
-      const results = [];
-      cards.forEach(card => {
-        const titleEl = card.querySelector('h3, .article-title, a');
-        const metaEl = card.querySelector('.time, .meta, [class*="time"], .kr-meta');
-        const title = titleEl?.innerText?.trim();
-        const meta = metaEl?.innerText?.trim();
-        const link = titleEl?.href || '';
-        if (title && title.length > 3) {
-          results.push({ title, meta: meta || '', link });
-        }
-      });
-      return results;
-    });
-
-    const items = articles.slice(0, CONFIG.maxArticlesPerKeyword).map(a => ({
-      title: a.title,
-      source: '36氪',
-      keyword,
-      meta: a.meta,
-      link: a.link,
-      confidence: 'title_only',
-      date: new Date().toISOString(),
-    }));
-
-    success(`36氪 "${keyword}"`, `${items.length} 条`);
-    return items;
-  } catch (e) {
-    warn(`36氪 "${keyword}" 失败`, e.message);
-    return [];
-  }
-}
-
-/**
- * 主采集流程：读取选题 → 36氪搜索 → 通用站点 → 新浪行情 → 去重 → 保存。
- * @returns {Promise<void>}
+ * 主采集流程
  */
 async function collect() {
   const topicsFile = path.join(DATA_DIR, 'topics.json');
-
-  // 异步检查并读取选题数据
-  let topics;
+  let topicsData;
   try {
     const raw = await fsp.readFile(topicsFile, 'utf-8');
-    topics = JSON.parse(raw);
+    topicsData = JSON.parse(raw);
   } catch (err) {
-    error('没有选题数据或读取失败', `请先运行 Stage 1: ${err.message}`);
+    error('没有选题数据', `请先运行 Stage 1: ${err.message}`);
     process.exit(1);
   }
 
-  const keywords = topics.keywords || [];
+  const keywords = topicsData.keywords || [];
   info('开始采集', `${keywords.length} 个关键词`);
 
   let browser;
   try {
     browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-    const page = await browser.newPage();
+    const context = await browser.newContext();
+    const page = await context.newPage();
     const allArticles = [];
 
-    // === 36氪搜索 ===
-    for (const kw of keywords.slice(0, CONFIG.max36krKeywords)) {
-      const items = await collect36kr(page, kw);
-      allArticles.push(...items);
-    }
+    // === 36氪选题（直接用Stage1的URL抓正文）===
+    const topics = topicsData.topics || [];
+    const krItems = topics.slice(0, 15).map(t => ({
+      title: t.title, source: '36氪', keyword: '', meta: '',
+      link: (t.url && t.url.startsWith('http')) ? t.url : '',
+      confidence: 'title_only', date: new Date().toISOString(),
+    }));
+    await fetchBodies(context, krItems, 5);
+    allArticles.push(...krItems);
+    const withBody = krItems.filter(i => i.content).length;
+    success('36氪选题', `${krItems.length} 条（正文${withBody}篇）`);
 
     // === 通用站点采集 ===
     for (const site of CONFIG.sites) {
       info(`采集 ${site.name}`);
       try {
-        const items = await collectSite(page, site);
+        const items = await collectSite(context, page, site);
         allArticles.push(...items);
-        success(`${site.name} 采集完成`, `${items.length} 条`);
+        const withBody = items.filter(i => i.content).length;
+        success(`${site.name}`, `${items.length} 条（正文${withBody}篇）`);
       } catch (e) {
         warn(`${site.name} 采集失败`, e.message);
       }
@@ -185,13 +180,9 @@ async function collect() {
         const emoji = s.isLimitUp ? '🔴涨停' : s.changePct >= 0 ? '🟢' : '🔴';
         allArticles.push({
           title: `${s.name}(${s.code}) ¥${s.current} ${s.change > 0 ? '+' : ''}${s.changePct}% 成交¥${s.turnoverYi}亿 ${emoji}`,
-          source: '新浪财经API',
-          keyword: '',
-          meta: `${s.date} ${s.time}`,
+          source: '新浪财经API', keyword: '', meta: `${s.date} ${s.time}`,
           link: `https://finance.sina.com.cn/realstock/company/${s.code}/nc.shtml`,
-          confidence: 'verified',
-          date: new Date().toISOString(),
-          stock: s,
+          confidence: 'verified', date: new Date().toISOString(), stock: s,
         });
       }
       success('新浪行情API', `${stocks.length} 条行情`);
@@ -207,33 +198,18 @@ async function collect() {
     const result = {
       runAt: new Date().toISOString(),
       date: new Date().toISOString().slice(0, 10),
-      keywords: keywords,
-      sources: Object.keys(bySource),
-      articles: unique,
-      stats: {
-        total: unique.length,
-        total_raw: allArticles.length,
-        by_source: bySource,
-        by_confidence: byConfidence,
-      },
+      keywords, sources: Object.keys(bySource), articles: unique,
+      stats: { total: unique.length, total_raw: allArticles.length, by_source: bySource, by_confidence: byConfidence },
     };
 
     await writeJSON('collected.json', result);
 
     success('采集完成', `${unique.length} 条（原始${allArticles.length}条，去重${allArticles.length - unique.length}条）`);
-    for (const [src, cnt] of Object.entries(bySource)) {
-      console.log(`   ${src}: ${cnt} 条`);
-    }
+    for (const [src, cnt] of Object.entries(bySource)) console.log(`   ${src}: ${cnt} 条`);
     success('可信度', `✅已核实 ${byConfidence.verified} 条 | ⚠️仅标题 ${byConfidence.title_only} 条`);
   } finally {
-    if (browser) {
-      await browser.close().catch(() => {});
-      info('浏览器已关闭');
-    }
+    if (browser) { await browser.close().catch(() => {}); info('浏览器已关闭'); }
   }
 }
 
-collect().catch(e => {
-  error('采集失败', e.message);
-  process.exit(1);
-});
+collect().catch(e => { error('采集失败', e.message); process.exit(1); });
